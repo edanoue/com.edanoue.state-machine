@@ -1,0 +1,11 @@
+{
+  "name": "com.edanoue.state-machine",
+  "displayName": "Edanoue State Machine",
+  "version": "1.0.0",
+  "unity": "2021.3",
+  "author": {
+    "name": "Edanoue, Inc.",
+    "email": "contact@edanoue.com",
+    "url": "https://edanoue.com"
+  }
+}

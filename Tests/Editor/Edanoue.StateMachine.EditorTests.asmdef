@@ -1,0 +1,22 @@
+{
+  "name": "Edanoue.StateMachine.EditorTests",
+  "rootNamespace": "Edanoue.StateMachine.Tests",
+  "references": [
+    "GUID:2372f725869b68c40a819387032e7963"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll"
+  ],
+  "autoReferenced": false,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
