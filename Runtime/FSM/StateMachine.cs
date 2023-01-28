@@ -12,7 +12,7 @@ namespace Edanoue.StateMachine
     /// </summary>
     /// <typeparam name="TContext">コンテキストの型</typeparam>
     /// <typeparam name="TTrigger">トリガーの型</typeparam>
-    public partial class StateMachine<TContext, TTrigger>
+    public partial class StateMachine<TContext, TTrigger> : IDisposable
     {
         private readonly List<State> _stateList;
         private          State?      _nextState;
@@ -56,6 +56,19 @@ namespace Edanoue.StateMachine
         /// 現在の State を取得 (継承先のクラス用)
         /// </summary>
         protected State? CurrentState { get; private set; }
+
+        public void Dispose()
+        {
+            foreach (var state in _stateList)
+            {
+                state.Dispose();
+            }
+
+            _stateList.Clear();
+            _prevState = null;
+            CurrentState = null;
+            _nextState = null;
+        }
 
         /// <summary>
         /// 指定した State が現在の State なら True
@@ -202,9 +215,9 @@ namespace Edanoue.StateMachine
         {
             foreach (var state in _stateList)
             {
-                if (state.GetType() == typeof(TState))
+                if (state is TState t)
                 {
-                    return (TState)state;
+                    return t;
                 }
             }
 

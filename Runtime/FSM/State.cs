@@ -2,6 +2,7 @@
 
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 
 namespace Edanoue.StateMachine
@@ -17,7 +18,7 @@ namespace Edanoue.StateMachine
         /// <summary>
         /// State を表現するクラス
         /// </summary>
-        public abstract class State
+        public abstract class State : IDisposable
         {
             /// <summary>
             /// 内部用のTransition Table
@@ -49,6 +50,10 @@ namespace Edanoue.StateMachine
             /// </summary>
             /// <value>Stateの名前</value>
             public virtual string Name => GetType().Name;
+
+            public virtual void Dispose()
+            {
+            }
 
             /// <summary>
             /// ステート突入時に一度だけ呼ばれる関数
