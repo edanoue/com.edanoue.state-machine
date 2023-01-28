@@ -85,7 +85,7 @@ namespace Edanoue.StateMachine
                 _nextState = null;
 
                 // ステートを開始する
-                _currentState.EnterInternal();
+                _currentState.Enter();
 
                 // ここですでに次のステートが決定している可能性がある
                 // まだ決定していない場合は処理を抜ける
@@ -100,21 +100,21 @@ namespace Edanoue.StateMachine
             if (_nextState is null)
             {
                 // 現在のStateのUpdate関数を呼ぶ
-                _currentState!.UpdateInternal();
+                _currentState!.Update();
             }
 
             // 次の遷移先が代入されていたら, ステートを切り替える
             while (_nextState is not null)
             {
                 // 以前のステートを終了する
-                _currentState!.ExitInternal();
+                _currentState!.Exit();
 
                 // ステートの切り替え処理
                 _currentState = _nextState;
                 _nextState = null;
 
                 // 次のステートを開始する
-                _currentState.EnterInternal();
+                _currentState.Enter();
             }
         }
 
@@ -177,13 +177,13 @@ namespace Edanoue.StateMachine
                     {
                         // NextState から GroupState の InitialState に向けて Transition を貼る
                         var nextInitialState = nextGroupState.GetInitialState();
-                        AddTransition(prevLeafState, nextInitialState, trigger);
+                        prevLeafState.AddNextNode(trigger, nextInitialState);
                         break;
                     }
                     // NextState が LeafState のばあい
                     case LeafState nextLeafState:
                     {
-                        AddTransition(prevLeafState, nextLeafState, trigger);
+                        prevLeafState.AddNextNode(trigger, nextLeafState);
                         break;
                     }
                 }
@@ -205,7 +205,7 @@ namespace Edanoue.StateMachine
                         var nextGroupInitialState = nextGroupState.GetInitialState();
                         foreach (var p in allPrevLeafStates)
                         {
-                            AddTransition(p, nextGroupInitialState, trigger);
+                            p.AddNextNode(trigger, nextGroupInitialState);
                         }
 
                         break;
@@ -215,24 +215,13 @@ namespace Edanoue.StateMachine
                     {
                         foreach (var p in allPrevLeafStates)
                         {
-                            AddTransition(p, nextLeafState, trigger);
+                            p.AddNextNode(trigger, nextLeafState);
                         }
 
                         break;
                     }
                 }
             }
-        }
-
-        private static void AddTransition(LeafState prev, LeafState next, TTrigger trigger)
-        {
-            // prev state からは常に一種類のみの Transition が出ているべき
-            if (prev.IsAlreadyExistTransition(trigger))
-            {
-                throw new ArgumentException("既に登録済みのTriggerです");
-            }
-
-            prev.AddNextNode(trigger, next);
         }
 
         /// <summary>
@@ -250,18 +239,12 @@ namespace Edanoue.StateMachine
 
             var initialState = GetOrCreateState<T>();
 
-            if (initialState is LeafState ls)
+            _nextState = initialState switch
             {
-                _nextState = ls;
-            }
-            else if (initialState is GroupState gs)
-            {
-                _nextState = gs.GetInitialState();
-            }
-            else
-            {
-                throw new InvalidOperationException("初期Stateが解決出来ませんでした");
-            }
+                LeafState ls => ls,
+                GroupState gs => gs.GetInitialState(),
+                _ => throw new InvalidOperationException("初期Stateが解決出来ませんでした")
+            };
         }
 
         /// <summary>
@@ -290,7 +273,7 @@ namespace Edanoue.StateMachine
             if (newState is GroupState groupState)
             {
                 // Sub-state を構築する
-                groupState.SetupSubStates();
+                groupState.SetupSubStates(groupState);
             }
 
             _stateList.Add(newState);

@@ -109,6 +109,11 @@ namespace Edanoue.StateMachine
                 throw new InvalidOperationException("すでに起動中のStateMachineです");
             }
 
+            if (typeof(TPrevState) == typeof(TNextState))
+            {
+                throw new ArgumentException("TPrevState と TNextState が同じです.");
+            }
+
             // Stateのインスタンスを取得する
             // まだStateが内部で作成されていなければ, このときに生成を行う
             var prevState = GetOrCreateState<TPrevState>();

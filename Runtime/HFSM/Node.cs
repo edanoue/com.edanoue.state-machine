@@ -27,23 +27,9 @@ namespace Edanoue.StateMachine
             {
             }
 
-            /// <summary>
-            /// 自身を管理するStateMachineへの参照
-            /// </summary>
-            protected ITriggerReceiver<TTrigger> StateMachine => _stateMachine;
-
-            /// <summary>
-            /// 自身を管理するStateMachineの持つコンテキストへの参照
-            /// </summary>
-            protected TContext Context => _stateMachine.Context;
-
             public virtual void Dispose()
             {
             }
-
-            internal abstract void EnterInternal();
-            internal abstract void UpdateInternal();
-            internal abstract void ExitInternal();
         }
     }
 }

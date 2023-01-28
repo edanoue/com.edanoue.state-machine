@@ -15,10 +15,60 @@ namespace Edanoue.StateMachine
     /// <typeparam name="TTrigger"></typeparam>
     partial class HierarchicalStateMachine<TContext, TTrigger>
     {
-        public abstract class GroupState : Node
+        public abstract class GroupState :
+            Node,
+            ISubStateSetup<TContext, TTrigger>
         {
             private readonly List<Node> _childNodeList = new();
             private          Node?      _initialState;
+
+
+            /// <summary>
+            /// </summary>
+            /// <param name="trigger"></param>
+            /// <typeparam name="TPrevState"></typeparam>
+            /// <typeparam name="TNextState"></typeparam>
+            void ISubStateSetup<TContext, TTrigger>.AddTransition<TPrevState, TNextState>(TTrigger trigger)
+            {
+                _stateMachine.AddTransition<TPrevState, TNextState>(trigger);
+
+                // State Machine から生成された State の参照を取得
+                var prevState = _stateMachine.GetState<TPrevState>();
+                var nextState = _stateMachine.GetState<TNextState>();
+
+                // 自身の子として登録しておく
+                if (!_childNodeList.Contains(prevState))
+                {
+                    _childNodeList.Add(prevState);
+                }
+
+                if (!_childNodeList.Contains(nextState))
+                {
+                    _childNodeList.Add(nextState);
+                }
+            }
+
+            /// <summary>
+            /// </summary>
+            /// <typeparam name="T"></typeparam>
+            /// <exception cref="InvalidOperationException"></exception>
+            void ISubStateSetup<TContext, TTrigger>.SetInitialState<T>()
+            {
+                if (_stateMachine.IsRunning)
+                {
+                    throw new InvalidOperationException("すでに起動中のStateMachineです");
+                }
+
+                // StateMachine 本体から参照を取得する
+                var initialState = _stateMachine.GetState<T>();
+
+                if (!_childNodeList.Contains(initialState))
+                {
+                    throw new InvalidOperationException("設定した State は自身の子のStateではありません.");
+                }
+
+                _initialState = initialState;
+            }
 
             internal LeafState GetInitialState()
             {
@@ -57,72 +107,10 @@ namespace Edanoue.StateMachine
                 }
             }
 
-            internal sealed override void EnterInternal()
-            {
-            }
-
-            internal sealed override void UpdateInternal()
-            {
-            }
-
-            internal sealed override void ExitInternal()
-            {
-            }
-
-            protected internal abstract void SetupSubStates();
-
             /// <summary>
+            /// この GroupState 内部の遷移を構築する.
             /// </summary>
-            /// <param name="trigger"></param>
-            /// <typeparam name="TPrevState"></typeparam>
-            /// <typeparam name="TNextState"></typeparam>
-            /// <exception cref="InvalidOperationException"></exception>
-            /// <exception cref="ArgumentException"></exception>
-            protected void AddTransition<TPrevState, TNextState>(TTrigger trigger)
-                where TPrevState : Node, new()
-                where TNextState : Node, new()
-            {
-                // State Machine のものを登録しておく
-                _stateMachine.AddTransition<TPrevState, TNextState>(trigger);
-
-                // State Machine から生成された State の参照を取得
-                var prevState = _stateMachine.GetState<TPrevState>();
-                var nextState = _stateMachine.GetState<TNextState>();
-
-                // 自身の子として登録しておく
-                if (!_childNodeList.Contains(prevState))
-                {
-                    _childNodeList.Add(prevState);
-                }
-
-                if (!_childNodeList.Contains(nextState))
-                {
-                    _childNodeList.Add(nextState);
-                }
-            }
-
-            /// <summary>
-            /// </summary>
-            /// <typeparam name="T"></typeparam>
-            /// <exception cref="InvalidOperationException"></exception>
-            protected void SetInitialState<T>()
-                where T : Node
-            {
-                if (_stateMachine.IsRunning)
-                {
-                    throw new InvalidOperationException("すでに起動中のStateMachineです");
-                }
-
-                // StateMachine 本体から参照を取得する
-                var initialState = _stateMachine.GetState<T>();
-
-                if (!_childNodeList.Contains(initialState))
-                {
-                    throw new InvalidOperationException("設定した State は自身の子のStateではありません.");
-                }
-
-                _initialState = initialState;
-            }
+            protected internal abstract void SetupSubStates(ISubStateSetup<TContext, TTrigger> group);
         }
     }
 }

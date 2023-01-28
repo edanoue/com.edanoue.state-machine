@@ -2,6 +2,7 @@
 
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 
 namespace Edanoue.StateMachine
@@ -23,30 +24,26 @@ namespace Edanoue.StateMachine
             // ReSharper disable once InconsistentNaming
             private readonly Dictionary<TTrigger, LeafState> _transitionTable = new();
 
-            internal sealed override void EnterInternal()
-            {
-                Enter();
-            }
+            /// <summary>
+            /// 自身を管理するStateMachineへの参照
+            /// </summary>
+            protected ITriggerReceiver<TTrigger> StateMachine => _stateMachine;
 
-            internal sealed override void UpdateInternal()
-            {
-                Update();
-            }
+            /// <summary>
+            /// 自身を管理するStateMachineの持つコンテキストへの参照
+            /// </summary>
+            protected TContext Context => _stateMachine.Context;
 
-            internal sealed override void ExitInternal()
-            {
-                Exit();
-            }
 
-            protected virtual void Enter()
+            protected internal virtual void Enter()
             {
             }
 
-            protected virtual void Update()
+            protected internal virtual void Update()
             {
             }
 
-            protected virtual void Exit()
+            protected internal virtual void Exit()
             {
             }
 
@@ -55,13 +52,14 @@ namespace Edanoue.StateMachine
                 return _transitionTable.TryGetValue(trigger, out nextNode);
             }
 
-            internal bool IsAlreadyExistTransition(TTrigger trigger)
-            {
-                return _transitionTable.ContainsKey(trigger);
-            }
-
             internal void AddNextNode(TTrigger trigger, LeafState nextNode)
             {
+                // prev state からは常に一種類のみの Transition が出ているべき
+                if (_transitionTable.ContainsKey(trigger))
+                {
+                    throw new ArgumentException("既に登録済みのTriggerです");
+                }
+
                 _transitionTable[trigger] = nextNode;
             }
         }

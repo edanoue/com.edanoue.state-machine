@@ -56,11 +56,11 @@ namespace Edanoue.StateMachine.Tests
 
         private class 監視状態 : StateMachine.GroupState
         {
-            protected override void SetupSubStates()
+            protected override void SetupSubStates(ISubStateSetup<TS_HFSM, Trigger> group)
             {
-                AddTransition<巡回中, 停止中>(Trigger.かなり歩いてつかれた);
-                AddTransition<停止中, 巡回中>(Trigger.つかれがとれた);
-                SetInitialState<巡回中>();
+                group.AddTransition<巡回中, 停止中>(Trigger.かなり歩いてつかれた);
+                group.AddTransition<停止中, 巡回中>(Trigger.つかれがとれた);
+                group.SetInitialState<巡回中>();
             }
 
             internal class 巡回中 : StateMachine.LeafState
@@ -69,11 +69,11 @@ namespace Edanoue.StateMachine.Tests
 
             internal class 停止中 : StateMachine.GroupState
             {
-                protected override void SetupSubStates()
+                protected override void SetupSubStates(ISubStateSetup<TS_HFSM, Trigger> group)
                 {
-                    AddTransition<右を見ている, 左を見ている>(Trigger.右を見終わった);
-                    AddTransition<左を見ている, 右を見ている>(Trigger.左を見終わった);
-                    SetInitialState<右を見ている>();
+                    group.AddTransition<右を見ている, 左を見ている>(Trigger.右を見終わった);
+                    group.AddTransition<左を見ている, 右を見ている>(Trigger.左を見終わった);
+                    group.SetInitialState<右を見ている>();
                 }
 
                 internal class 右を見ている : StateMachine.LeafState
