@@ -14,9 +14,9 @@ namespace Edanoue.StateMachine
     /// <typeparam name="TTrigger">トリガーの型</typeparam>
     public partial class StateMachine<TContext, TTrigger> : IDisposable
     {
-        private readonly List<State> _stateList;
-        private          State?      _nextState;
-        private          State?      _prevState;
+        private readonly HashSet<State> _stateList = new();
+        private          State?         _nextState;
+        private          State?         _prevState;
 
         /// <summary>
         /// StateMachine の初期化を行う
@@ -31,7 +31,6 @@ namespace Edanoue.StateMachine
 
             // メンバーの初期化を行う
             Context = context;
-            _stateList = new List<State>();
         }
 
         /// <summary>

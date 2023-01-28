@@ -36,7 +36,7 @@ namespace Edanoue.StateMachine.Tests
 
             // 遷移の確認 (監視状態のどこにいても戦闘状態に)
             sm.SendTriggerAndUpdateState(Trigger.敵を発見した);
-            Assert.That(sm.IsCurrentState<戦闘状態>(), Is.True);
+            Assert.That(sm.IsCurrentState<戦闘状態.距離を取る>(), Is.True);
 
             // 遷移の確認
             sm.SendTriggerAndUpdateState(Trigger.敵を見失った);
@@ -51,7 +51,9 @@ namespace Edanoue.StateMachine.Tests
             かなり歩いてつかれた,
             つかれがとれた,
             右を見終わった,
-            左を見終わった
+            左を見終わった,
+            プレイヤーにある程度近づいた,
+            プレイヤーを殴った
         }
 
         private class 監視状態 : StateMachine.GroupState
@@ -86,11 +88,21 @@ namespace Edanoue.StateMachine.Tests
             }
         }
 
-        private class 戦闘状態 : StateMachine.LeafState
+        private class 戦闘状態 : StateMachine.GroupState
         {
-            protected override void Enter()
+            protected override void SetupSubStates(ISubStateSetup<TS_HFSM, Trigger> group)
             {
-                base.Enter();
+                group.AddTransition<距離を取る, 殴る>(Trigger.プレイヤーにある程度近づいた);
+                group.AddTransition<殴る, 距離を取る>(Trigger.プレイヤーを殴った);
+                group.SetInitialState<距離を取る>();
+            }
+
+            internal class 殴る : StateMachine.LeafState
+            {
+            }
+
+            internal class 距離を取る : StateMachine.LeafState
+            {
             }
         }
     }

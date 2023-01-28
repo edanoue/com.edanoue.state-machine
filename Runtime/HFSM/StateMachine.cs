@@ -16,9 +16,9 @@ namespace Edanoue.StateMachine
         ITriggerReceiver<TTrigger>,
         IDisposable
     {
-        private readonly List<Node> _stateList = new();
-        private          LeafState? _currentState;
-        private          LeafState? _nextState;
+        private readonly HashSet<Node> _stateList = new();
+        private          LeafState?    _currentState;
+        private          LeafState?    _nextState;
 
         /// <summary>
         /// StateMachine の初期化を行う
@@ -193,7 +193,7 @@ namespace Edanoue.StateMachine
             else if (prevState is GroupState groupPrevState)
             {
                 // GroupState に含まれるすべてのノードからの Transition を作成する
-                var allPrevLeafStates = new List<LeafState>();
+                var allPrevLeafStates = new HashSet<LeafState>();
                 groupPrevState.GetAllChildLeafState(ref allPrevLeafStates);
 
                 switch (nextState)

@@ -19,8 +19,8 @@ namespace Edanoue.StateMachine
             Node,
             ISubStateSetup<TContext, TTrigger>
         {
-            private readonly List<Node> _childNodeList = new();
-            private          Node?      _initialState;
+            private readonly HashSet<Node> _childNodeList = new();
+            private          Node?         _initialState;
 
 
             /// <summary>
@@ -91,7 +91,7 @@ namespace Edanoue.StateMachine
                 throw new InvalidOperationException("InitialState の解決に失敗しました");
             }
 
-            internal void GetAllChildLeafState(ref List<LeafState> leafStates)
+            internal void GetAllChildLeafState(ref HashSet<LeafState> leafStates)
             {
                 foreach (var childNode in _childNodeList)
                 {
