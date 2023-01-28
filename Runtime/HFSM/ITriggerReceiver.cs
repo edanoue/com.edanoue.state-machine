@@ -12,17 +12,12 @@ namespace Edanoue.StateMachine
         /// <summary>
         /// </summary>
         /// <param name="trigger"></param>
+        /// <param name="autoUpdate"></param>
         /// <returns></returns>
-        public bool SendTrigger(TTrigger trigger);
+        public bool SendTrigger(TTrigger trigger, bool autoUpdate = false);
 
         /// <summary>
         /// </summary>
         public void UpdateState();
-
-        /// <summary>
-        /// </summary>
-        /// <param name="trigger"></param>
-        /// <returns></returns>
-        public bool SendTriggerAndUpdateState(TTrigger trigger);
     }
 }

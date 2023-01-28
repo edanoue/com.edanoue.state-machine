@@ -59,8 +59,9 @@ namespace Edanoue.StateMachine
         /// State Machine に 発生したTrigger を送信する関数
         /// </summary>
         /// <param name="trigger"></param>
+        /// <param name="autoUpdate"></param>
         /// <returns>現在のStateに指定のTriggerが登録されていればtrue</returns>
-        public bool SendTrigger(TTrigger trigger)
+        public bool SendTrigger(TTrigger trigger, bool autoUpdate = false)
         {
             if (!IsRunning)
             {
@@ -68,7 +69,17 @@ namespace Edanoue.StateMachine
             }
 
             // 現在の State の transitionMap を見て, 移行先のStateが存在する場合, nextState を更新する
-            return _currentState!.TryGetNextNode(trigger, out _nextState);
+            if (!_currentState!.TryGetNextNode(trigger, out _nextState))
+            {
+                return false;
+            }
+
+            if (autoUpdate)
+            {
+                UpdateState();
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -116,17 +127,6 @@ namespace Edanoue.StateMachine
                 // 次のステートを開始する
                 _currentState.Enter();
             }
-        }
-
-        public bool SendTriggerAndUpdateState(TTrigger trigger)
-        {
-            if (!SendTrigger(trigger))
-            {
-                return false;
-            }
-
-            UpdateState();
-            return true;
         }
 
         /// <summary>
