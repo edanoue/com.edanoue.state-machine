@@ -16,9 +16,11 @@ namespace Edanoue.StateMachine
         ITriggerReceiver<TTrigger>,
         IDisposable
     {
-        private readonly  HashSet<State> _stateList = new();
-        private protected State?         _currentState;
-        private           State?         _nextState;
+        private readonly HashSet<State> _stateList = new();
+
+        // ReSharper disable once InconsistentNaming
+        private protected State? _currentState;
+        private           State? _nextState;
 
         /// <summary>
         /// StateMachine の初期化を行う
@@ -73,7 +75,7 @@ namespace Edanoue.StateMachine
             }
 
             // 現在の State の transitionMap を見て, 移行先のStateが存在する場合, nextState を更新する
-            if (!_currentState!.TransitionTable.TryGetValue(trigger, out _nextState))
+            if (!_currentState!._transitionTable.TryGetValue(trigger, out _nextState))
             {
                 return false;
             }
@@ -100,7 +102,7 @@ namespace Edanoue.StateMachine
                 _nextState = null;
 
                 // ステートを開始する
-                _currentState.Enter();
+                _currentState.OnEnter();
 
                 // ここですでに次のステートが決定している可能性がある
                 // まだ決定していない場合は処理を抜ける
@@ -114,21 +116,21 @@ namespace Edanoue.StateMachine
             if (_nextState is null)
             {
                 // 現在のStateのUpdate関数を呼ぶ
-                _currentState!.Update();
+                _currentState!.OnUpdate();
             }
 
             // 次の遷移先が代入されていたら, ステートを切り替える
             while (_nextState is not null)
             {
                 // 以前のステートを終了する
-                _currentState!.Exit();
+                _currentState!.OnExit();
 
                 // ステートの切り替え処理
                 _currentState = _nextState;
                 _nextState = null;
 
                 // 次のステートを開始する
-                _currentState.Enter();
+                _currentState.OnEnter();
             }
         }
 
@@ -171,13 +173,13 @@ namespace Edanoue.StateMachine
             var nextState = GetOrCreateState<TNextState>();
 
             // prev state からは常に一種類のみの Transition が出ているべき
-            if (prevState.TransitionTable.ContainsKey(trigger))
+            if (prevState._transitionTable.ContainsKey(trigger))
             {
                 throw new ArgumentException("既に登録済みのTriggerです");
             }
 
             // prev state にTransition を登録
-            prevState.TransitionTable[trigger] = nextState;
+            prevState._transitionTable[trigger] = nextState;
         }
 
         /// <summary>

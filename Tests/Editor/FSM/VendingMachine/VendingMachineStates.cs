@@ -29,7 +29,7 @@ namespace Edanoue.StateMachine.Tests.VendingMachine
     /// </summary>
     public sealed class StateNotEnoughMoney : BaseState
     {
-        protected override void Enter()
+        protected override void OnEnter()
         {
             // もしお金が足りていたら, お金足りてる状態に移動する
             if (Context.TotalCoinCount >= VendingMachine.JUICE_PRICE)
@@ -38,7 +38,7 @@ namespace Edanoue.StateMachine.Tests.VendingMachine
             }
         }
 
-        protected override void Update()
+        protected override void OnUpdate()
         {
             // もしお金が足りていたら, お金足りてる状態に移動する
             if (Context.TotalCoinCount >= VendingMachine.JUICE_PRICE)
@@ -53,7 +53,7 @@ namespace Edanoue.StateMachine.Tests.VendingMachine
     /// </summary>
     public sealed class StateProvidingJuice : BaseState
     {
-        protected override void Enter()
+        protected override void OnEnter()
         {
             // ジュースを一つ排出する
             Context.ProvidedJuiceCount += 1;
@@ -81,7 +81,7 @@ namespace Edanoue.StateMachine.Tests.VendingMachine
     /// </summary>
     public sealed class StateProvidingCoin : BaseState
     {
-        protected override void Enter()
+        protected override void OnEnter()
         {
             // 今あるお釣りをすべて排出する
             Context.ProvidedCoinCount += Context.TotalCoinCount;

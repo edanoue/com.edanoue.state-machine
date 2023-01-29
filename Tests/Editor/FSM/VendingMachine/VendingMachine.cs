@@ -26,7 +26,7 @@ namespace Edanoue.StateMachine.Tests.VendingMachine
 
                 // ロック状態 => お金が足りない状態
                 // お金を投入すると状態遷移
-                _stateMachine.AddTransition<StateLocked, StateNotEnoughMoney>(Trigger.お金を入れる);
+                _stateMachine.AddTransition<StateLocked, StateNotEnoughMoney>(Trigger.お金が入った);
 
                 // お金が足りない状態 => お金足りてる状態
                 // お金を投入後, 最低購入金額をクリアしていたら遷移する
@@ -92,11 +92,14 @@ namespace Edanoue.StateMachine.Tests.VendingMachine
         /// </summary>
         public void EnterCoin(int coinCount)
         {
-            if (coinCount > 0)
+            if (coinCount <= 0)
             {
-                TotalCoinCount += coinCount;
-                _stateMachine.SendTrigger(Trigger.お金を入れる, true);
+                return;
             }
+
+            TotalCoinCount += coinCount;
+            _stateMachine.SendTrigger(Trigger.お金が入った);
+            _stateMachine.UpdateState();
         }
 
         public void PushButtonJuice()

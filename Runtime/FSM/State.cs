@@ -25,10 +25,12 @@ namespace Edanoue.StateMachine
             /// 遷移先を辞書形式で保存している
             /// StateMachine から代入される
             /// </summary>
-            internal readonly Dictionary<TTrigger, State> TransitionTable = new();
+            // ReSharper disable once InconsistentNaming
+            internal readonly Dictionary<TTrigger, State> _transitionTable = new();
 
             /// <summary>
             /// </summary>
+            // ReSharper disable once InconsistentNaming
             internal StateMachine<TContext, TTrigger> _stateMachine = null!;
 
             protected internal State()
@@ -55,21 +57,21 @@ namespace Edanoue.StateMachine
             /// <summary>
             /// ステート突入時に一度だけ呼ばれる関数
             /// </summary>
-            protected internal virtual void Enter()
+            protected internal virtual void OnEnter()
             {
             }
 
             /// <summary>
             /// ステート更新時に呼ばれる関数
             /// </summary>
-            protected internal virtual void Update()
+            protected internal virtual void OnUpdate()
             {
             }
 
             /// <summary>
             /// ステートを抜ける際に一度だけ呼ばれる関数
             /// </summary>
-            protected internal virtual void Exit()
+            protected internal virtual void OnExit()
             {
             }
         }

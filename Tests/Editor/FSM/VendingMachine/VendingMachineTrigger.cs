@@ -6,7 +6,7 @@ namespace Edanoue.StateMachine.Tests.VendingMachine
 {
     public enum Trigger
     {
-        お金を入れる,
+        お金が入った,
         お金が足りた,
         お金が足りない,
         ジュース購入ボタンを押す,

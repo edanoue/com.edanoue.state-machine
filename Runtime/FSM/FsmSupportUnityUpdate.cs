@@ -28,11 +28,11 @@ namespace Edanoue.StateMachine
 
         public abstract class StateSupportUnityUpdate : State
         {
-            protected internal void DynamicUpdate(float deltaTime)
+            protected internal virtual void DynamicUpdate(float deltaTime)
             {
             }
 
-            protected internal void FixedUpdate(float deltaTime)
+            protected internal virtual void FixedUpdate(float deltaTime)
             {
             }
         }
