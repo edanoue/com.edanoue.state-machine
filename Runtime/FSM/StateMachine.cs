@@ -12,11 +12,13 @@ namespace Edanoue.StateMachine
     /// </summary>
     /// <typeparam name="TContext">コンテキストの型</typeparam>
     /// <typeparam name="TTrigger">トリガーの型</typeparam>
-    public partial class StateMachine<TContext, TTrigger> : IDisposable
+    public partial class StateMachine<TContext, TTrigger> :
+        ITriggerReceiver<TTrigger>,
+        IDisposable
     {
-        private readonly HashSet<State> _stateList = new();
-        private          State?         _nextState;
-        private          State?         _prevState;
+        private readonly  HashSet<State> _stateList = new();
+        private protected State?         _currentState;
+        private           State?         _nextState;
 
         /// <summary>
         /// StateMachine の初期化を行う
@@ -43,18 +45,7 @@ namespace Edanoue.StateMachine
         /// <summary>
         /// 現在StateMachine が起動中かどうか
         /// </summary>
-        private bool IsRunning => CurrentState is not null;
-
-        /// <summary>
-        /// 現在のStateの名前を取得
-        /// </summary>
-        /// <returns></returns>
-        public string CurrentStateName => IsRunning ? CurrentState!.Name : string.Empty;
-
-        /// <summary>
-        /// 現在の State を取得 (継承先のクラス用)
-        /// </summary>
-        protected State? CurrentState { get; private set; }
+        private bool IsRunning => _currentState is not null;
 
         public void Dispose()
         {
@@ -64,9 +55,81 @@ namespace Edanoue.StateMachine
             }
 
             _stateList.Clear();
-            _prevState = null;
-            CurrentState = null;
+            _currentState = null;
             _nextState = null;
+        }
+
+        /// <summary>
+        /// State Machine に 発生したTrigger を送信する関数
+        /// </summary>
+        /// <param name="trigger"></param>
+        /// <param name="autoUpdate"></param>
+        /// <returns>現在のStateに指定のTriggerが登録されていればtrue</returns>
+        public bool SendTrigger(TTrigger trigger, bool autoUpdate = false)
+        {
+            if (!IsRunning)
+            {
+                throw new InvalidOperationException("ステートマシンはまだ起動していません.");
+            }
+
+            // 現在の State の transitionMap を見て, 移行先のStateが存在する場合, nextState を更新する
+            if (!_currentState!.TransitionTable.TryGetValue(trigger, out _nextState))
+            {
+                return false;
+            }
+
+            if (autoUpdate)
+            {
+                UpdateState();
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// StateMachineを更新する関数
+        /// </summary>
+        public void UpdateState()
+        {
+            // 初回のみ呼ばれる部分
+            if (!IsRunning)
+            {
+                // ステートを切り替える
+                // 初期ステートが設定されていないならエラー
+                _currentState = _nextState ?? throw new InvalidOperationException("開始ステートが設定されていません");
+                _nextState = null;
+
+                // ステートを開始する
+                _currentState.Enter();
+
+                // ここですでに次のステートが決定している可能性がある
+                // まだ決定していない場合は処理を抜ける
+                if (_nextState is null)
+                {
+                    return;
+                }
+            }
+
+            // 次のState が確定していない場合のみ, Update が呼ばれる
+            if (_nextState is null)
+            {
+                // 現在のStateのUpdate関数を呼ぶ
+                _currentState!.Update();
+            }
+
+            // 次の遷移先が代入されていたら, ステートを切り替える
+            while (_nextState is not null)
+            {
+                // 以前のステートを終了する
+                _currentState!.Exit();
+
+                // ステートの切り替え処理
+                _currentState = _nextState;
+                _nextState = null;
+
+                // 次のステートを開始する
+                _currentState.Enter();
+            }
         }
 
         /// <summary>
@@ -77,18 +140,7 @@ namespace Edanoue.StateMachine
         public bool IsCurrentState<T>()
             where T : State
         {
-            return typeof(T) == CurrentState?.GetType();
-        }
-
-        /// <summary>
-        /// 指定した State が一つ前の State なら True
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
-        public bool IsPrevState<T>()
-            where T : State
-        {
-            return typeof(T) == _prevState?.GetType();
+            return _currentState is T;
         }
 
         /// <summary>
@@ -145,82 +197,6 @@ namespace Edanoue.StateMachine
         }
 
         /// <summary>
-        /// StateMachineを更新する関数
-        /// </summary>
-        public void UpdateState(float deltaTime = 0f)
-        {
-            // 初回のみ呼ばれる部分
-            if (!IsRunning)
-            {
-                // ステートを切り替える
-                // 初期ステートが設定されていないならエラー
-                CurrentState = _nextState ?? throw new InvalidOperationException("開始ステートが設定されていません");
-                _prevState = null;
-                _nextState = null;
-
-                // ステートを開始する
-                // エラーが発生する可能性がある
-                CurrentState.Enter();
-
-                // ここですでに次のステートが決定している可能性がある
-                // まだ決定していない場合は処理を抜ける
-                if (_nextState is null)
-                {
-                    return;
-                }
-            }
-
-            // 次のState が確定していない場合のみ, Update が呼ばれる
-            if (_nextState is null)
-            {
-                // 現在のStateのUpdate関数を呼ぶ
-                CurrentState!.Update(deltaTime);
-            }
-
-            // 次の遷移先が代入されていたら, ステートを切り替える
-            while (_nextState is not null)
-            {
-                // 以前のステートを終了する
-                CurrentState!.Exit();
-
-                // ステートの切り替え処理
-                _prevState = CurrentState;
-                CurrentState = _nextState;
-                _nextState = null;
-
-                // 次のステートを開始する
-                CurrentState.Enter();
-            }
-        }
-
-        /// <summary>
-        /// State Machine に 発生したTrigger を送信する関数
-        /// </summary>
-        /// <param name="trigger"></param>
-        /// <param name="autoUpdate"></param>
-        /// <returns>現在のStateに指定のTriggerが登録されていればtrue</returns>
-        public bool SendTrigger(TTrigger trigger, bool autoUpdate = false)
-        {
-            if (!IsRunning)
-            {
-                throw new InvalidOperationException("ステートマシンはまだ起動していません.");
-            }
-
-            // 現在の State の transitionMap を見て, 移行先のStateが存在する場合, nextState を更新する
-            if (!CurrentState!.TransitionTable.TryGetValue(trigger, out _nextState))
-            {
-                return false;
-            }
-
-            if (autoUpdate)
-            {
-                UpdateState();
-            }
-
-            return true;
-        }
-
-        /// <summary>
         /// 既に生成済みの State ならそれを, なければ新規生成して返す関数
         /// </summary>
         /// <typeparam name="TState"></typeparam>
@@ -239,7 +215,7 @@ namespace Edanoue.StateMachine
             // State の新規作成
             var newState = new TState
             {
-                StateMachine = this
+                _stateMachine = this
             };
             _stateList.Add(newState);
             return newState;

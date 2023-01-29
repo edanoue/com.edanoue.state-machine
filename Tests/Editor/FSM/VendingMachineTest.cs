@@ -2,6 +2,7 @@
 
 #nullable enable
 
+using Edanoue.StateMachine.Tests.VendingMachine;
 using NUnit.Framework;
 
 namespace Edanoue.StateMachine.Tests
@@ -24,7 +25,7 @@ namespace Edanoue.StateMachine.Tests
             Assert.NotNull(vm);
 
             // 最初のState は Lockedになっている
-            Assert.That(vm.CurrentState, Is.EqualTo("StateLocked"));
+            Assert.That(vm.IsCurrentState<StateLocked>(), Is.True);
         }
 
         [Test]
@@ -34,7 +35,7 @@ namespace Edanoue.StateMachine.Tests
 
             // お金を 一枚 入れると StateNotEnoughMoney 状態
             vm.EnterCoin(1);
-            Assert.That(vm.CurrentState, Is.EqualTo("StateNotEnoughMoney"));
+            Assert.That(vm.IsCurrentState<StateNotEnoughMoney>(), Is.True);
         }
 
         [Test]
@@ -44,16 +45,16 @@ namespace Edanoue.StateMachine.Tests
 
             // お金を 一枚 入れると StateNotEnoughMoney 状態
             vm.EnterCoin(1);
-            Assert.That(vm.CurrentState, Is.EqualTo("StateNotEnoughMoney"));
+            Assert.That(vm.IsCurrentState<StateNotEnoughMoney>(), Is.True);
 
             // 3枚を超えると StateEnoughMoney 状態
             vm.EnterCoin(2);
-            Assert.That(vm.CurrentState, Is.EqualTo("StateEnoughMoney"));
+            Assert.That(vm.IsCurrentState<StateEnoughMoney>(), Is.True);
 
             // いきなり3枚を超過しても StateEnoughMoney 状態
             vm = new VM();
             vm.EnterCoin(5);
-            Assert.That(vm.CurrentState, Is.EqualTo("StateEnoughMoney"));
+            Assert.That(vm.IsCurrentState<StateEnoughMoney>(), Is.True);
         }
 
         [Test]
@@ -110,7 +111,7 @@ namespace Edanoue.StateMachine.Tests
             // ついでにもうかえないのでお釣りも出てきている
             Assert.That(vm.ProvidedCoinCount, Is.EqualTo(1));
             // ロック状態に戻っている
-            Assert.That(vm.CurrentState, Is.EqualTo("StateLocked"));
+            Assert.That(vm.IsCurrentState<StateLocked>(), Is.True);
 
             // おかねを 6 枚入れる
             vm.EnterCoin(6);

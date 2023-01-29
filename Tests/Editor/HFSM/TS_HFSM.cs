@@ -67,6 +67,9 @@ namespace Edanoue.StateMachine.Tests
 
             internal class 巡回中 : StateMachine.LeafState
             {
+                protected override void Enter()
+                {
+                }
             }
 
             internal class 停止中 : StateMachine.GroupState

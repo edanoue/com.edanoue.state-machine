@@ -137,7 +137,7 @@ namespace Edanoue.StateMachine
         public bool IsCurrentState<T>()
             where T : LeafState
         {
-            return typeof(T) == _currentState?.GetType();
+            return _currentState is T;
         }
 
         /// <summary>

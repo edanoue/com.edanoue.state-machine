@@ -25,32 +25,29 @@ namespace Edanoue.StateMachine
             /// 遷移先を辞書形式で保存している
             /// StateMachine から代入される
             /// </summary>
-            internal readonly Dictionary<TTrigger, State> TransitionTable;
+            internal readonly Dictionary<TTrigger, State> TransitionTable = new();
+
+            /// <summary>
+            /// </summary>
+            internal StateMachine<TContext, TTrigger> _stateMachine = null!;
+
+            protected internal State()
+            {
+            }
 
             /// <summary>
             /// 自身を管理するStateMachineへの参照
             /// </summary>
-            /// <remarks>
-            /// Generics の都合上コンストラクタからは初期化されず, StateMachineから直接代入される
-            /// </remarks>
-            protected internal StateMachine<TContext, TTrigger> StateMachine = null!;
+            protected ITriggerReceiver<TTrigger> StateMachine => _stateMachine;
 
-            protected internal State()
-            {
-                TransitionTable = new Dictionary<TTrigger, State>();
-            }
 
             /// <summary>
             /// 自身を管理するStateMachineの持つコンテキストへの参照
             /// </summary>
-            protected TContext Context => StateMachine.Context;
+            protected TContext Context => _stateMachine.Context;
 
             /// <summary>
-            /// State の名前を取得
             /// </summary>
-            /// <value>Stateの名前</value>
-            public virtual string Name => GetType().Name;
-
             public virtual void Dispose()
             {
             }
@@ -65,7 +62,7 @@ namespace Edanoue.StateMachine
             /// <summary>
             /// ステート更新時に呼ばれる関数
             /// </summary>
-            protected internal virtual void Update(float deltaTime)
+            protected internal virtual void Update()
             {
             }
 
