@@ -22,7 +22,6 @@ namespace Edanoue.StateMachine
             private readonly HashSet<Node> _childNodeList = new();
             private          Node?         _initialState;
 
-
             /// <summary>
             /// </summary>
             /// <param name="trigger"></param>
@@ -40,11 +39,13 @@ namespace Edanoue.StateMachine
                 if (!_childNodeList.Contains(prevState))
                 {
                     _childNodeList.Add(prevState);
+                    prevState._parent = this;
                 }
 
                 if (!_childNodeList.Contains(nextState))
                 {
                     _childNodeList.Add(nextState);
+                    nextState._parent = this;
                 }
             }
 

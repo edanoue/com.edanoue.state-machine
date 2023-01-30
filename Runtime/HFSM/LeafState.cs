@@ -24,26 +24,7 @@ namespace Edanoue.StateMachine
             // ReSharper disable once InconsistentNaming
             private readonly Dictionary<TTrigger, LeafState> _transitionTable = new();
 
-            /// <summary>
-            /// 自身を管理するStateMachineへの参照
-            /// </summary>
-            protected IRunningStateMachine<TTrigger> StateMachine => _stateMachine;
-
-            /// <summary>
-            /// 自身を管理するStateMachineの持つコンテキストへの参照
-            /// </summary>
-            protected TContext Context => _stateMachine.Context;
-
-
-            protected internal virtual void Enter()
-            {
-            }
-
-            protected internal virtual void Update()
-            {
-            }
-
-            protected internal virtual void Exit()
+            protected internal virtual void OnUpdate(IRunningStateMachine<TTrigger> stateMachine)
             {
             }
 
