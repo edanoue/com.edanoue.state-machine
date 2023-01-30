@@ -29,21 +29,21 @@ namespace Edanoue.StateMachine.Tests.VendingMachine
     /// </summary>
     public sealed class StateNotEnoughMoney : BaseState
     {
-        protected override void OnEnter()
+        protected override void OnEnter(IRunningStateMachine<Trigger> stateMachine)
         {
             // もしお金が足りていたら, お金足りてる状態に移動する
             if (Context.TotalCoinCount >= VendingMachine.JUICE_PRICE)
             {
-                StateMachine.SendTrigger(Trigger.お金が足りた, true);
+                stateMachine.SendTrigger(Trigger.お金が足りた);
             }
         }
 
-        protected override void OnUpdate()
+        protected override void OnUpdate(IRunningStateMachine<Trigger> stateMachine)
         {
             // もしお金が足りていたら, お金足りてる状態に移動する
             if (Context.TotalCoinCount >= VendingMachine.JUICE_PRICE)
             {
-                StateMachine.SendTrigger(Trigger.お金が足りた, true);
+                stateMachine.SendTrigger(Trigger.お金が足りた);
             }
         }
     }
@@ -53,7 +53,7 @@ namespace Edanoue.StateMachine.Tests.VendingMachine
     /// </summary>
     public sealed class StateProvidingJuice : BaseState
     {
-        protected override void OnEnter()
+        protected override void OnEnter(IRunningStateMachine<Trigger> stateMachine)
         {
             // ジュースを一つ排出する
             Context.ProvidedJuiceCount += 1;
@@ -65,13 +65,13 @@ namespace Edanoue.StateMachine.Tests.VendingMachine
             if (Context.TotalCoinCount >= VendingMachine.JUICE_PRICE)
             {
                 // お金足りてるTriggerを送る
-                StateMachine.SendTrigger(Trigger.お金が足りた, true);
+                stateMachine.SendTrigger(Trigger.お金が足りた);
             }
             // もうジュースを買えるだけのお金が残っていない
             else
             {
                 // お金足りないTriggerを送る
-                StateMachine.SendTrigger(Trigger.お金が足りない, true);
+                stateMachine.SendTrigger(Trigger.お金が足りない);
             }
         }
     }
@@ -81,14 +81,14 @@ namespace Edanoue.StateMachine.Tests.VendingMachine
     /// </summary>
     public sealed class StateProvidingCoin : BaseState
     {
-        protected override void OnEnter()
+        protected override void OnEnter(IRunningStateMachine<Trigger> stateMachine)
         {
             // 今あるお釣りをすべて排出する
             Context.ProvidedCoinCount += Context.TotalCoinCount;
             Context.TotalCoinCount = 0;
 
             // お釣りの排出完了
-            StateMachine.SendTrigger(Trigger.お釣りの排出が終わった, true);
+            stateMachine.SendTrigger(Trigger.お釣りの排出が終わった);
         }
     }
 }

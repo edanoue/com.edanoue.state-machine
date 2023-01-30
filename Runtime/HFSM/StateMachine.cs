@@ -13,12 +13,14 @@ namespace Edanoue.StateMachine
     /// <typeparam name="TContext">コンテキストの型</typeparam>
     /// <typeparam name="TTrigger">トリガーの型</typeparam>
     public partial class HierarchicalStateMachine<TContext, TTrigger> :
-        ITriggerReceiver<TTrigger>,
+        IRunningStateMachine<TTrigger>,
         IDisposable
     {
         private readonly HashSet<Node> _stateList = new();
-        private          LeafState?    _currentState;
-        private          LeafState?    _nextState;
+
+        // ReSharper disable once InconsistentNaming
+        private protected LeafState? _currentState;
+        private           LeafState? _nextState;
 
         /// <summary>
         /// StateMachine の初期化を行う
@@ -59,9 +61,8 @@ namespace Edanoue.StateMachine
         /// State Machine に 発生したTrigger を送信する関数
         /// </summary>
         /// <param name="trigger"></param>
-        /// <param name="autoUpdate"></param>
         /// <returns>現在のStateに指定のTriggerが登録されていればtrue</returns>
-        public bool SendTrigger(TTrigger trigger, bool autoUpdate = false)
+        public bool SendTrigger(TTrigger trigger)
         {
             if (!IsRunning)
             {
@@ -69,17 +70,7 @@ namespace Edanoue.StateMachine
             }
 
             // 現在の State の transitionMap を見て, 移行先のStateが存在する場合, nextState を更新する
-            if (!_currentState!.TryGetNextNode(trigger, out _nextState))
-            {
-                return false;
-            }
-
-            if (autoUpdate)
-            {
-                UpdateState();
-            }
-
-            return true;
+            return _currentState!.TryGetNextNode(trigger, out _nextState);
         }
 
         /// <summary>
@@ -157,10 +148,13 @@ namespace Edanoue.StateMachine
                 throw new InvalidOperationException("すでに起動中のStateMachineです");
             }
 
+            // 同じ　State 同士の遷移を許可する
+            /*
             if (typeof(TPrevState) == typeof(TNextState))
             {
                 throw new ArgumentException("TPrevState と TNextState が同じです.");
             }
+            */
 
             // Stateのインスタンスを取得する
             // まだStateが内部で作成されていなければ, このときに生成を行う

@@ -31,15 +31,18 @@ namespace Edanoue.StateMachine.Tests
             Assert.That(sm.IsCurrentState<監視状態.巡回中>(), Is.True);
 
             // 遷移の確認
-            sm.SendTrigger(Trigger.かなり歩いてつかれた, true);
+            sm.SendTrigger(Trigger.かなり歩いてつかれた);
+            sm.UpdateState();
             Assert.That(sm.IsCurrentState<監視状態.停止中.右を見ている>(), Is.True);
 
             // 遷移の確認 (監視状態のどこにいても戦闘状態に)
-            sm.SendTrigger(Trigger.敵を発見した, true);
+            sm.SendTrigger(Trigger.敵を発見した);
+            sm.UpdateState();
             Assert.That(sm.IsCurrentState<戦闘状態.距離を取る>(), Is.True);
 
             // 遷移の確認
-            sm.SendTrigger(Trigger.敵を見失った, true);
+            sm.SendTrigger(Trigger.敵を見失った);
+            sm.UpdateState();
             Assert.That(sm.IsCurrentState<監視状態.巡回中>(), Is.True);
         }
 

@@ -104,12 +104,14 @@ namespace Edanoue.StateMachine.Tests.VendingMachine
 
         public void PushButtonJuice()
         {
-            _stateMachine.SendTrigger(Trigger.ジュース購入ボタンを押す, true);
+            _stateMachine.SendTrigger(Trigger.ジュース購入ボタンを押す);
+            _stateMachine.UpdateState();
         }
 
         public void PushButtonChange()
         {
-            _stateMachine.SendTrigger(Trigger.おつり返却ボタンを押す, true);
+            _stateMachine.SendTrigger(Trigger.おつり返却ボタンを押す);
+            _stateMachine.UpdateState();
         }
     }
 }

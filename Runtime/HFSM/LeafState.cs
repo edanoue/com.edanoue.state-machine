@@ -27,7 +27,7 @@ namespace Edanoue.StateMachine
             /// <summary>
             /// 自身を管理するStateMachineへの参照
             /// </summary>
-            protected ITriggerReceiver<TTrigger> StateMachine => _stateMachine;
+            protected IRunningStateMachine<TTrigger> StateMachine => _stateMachine;
 
             /// <summary>
             /// 自身を管理するStateMachineの持つコンテキストへの参照

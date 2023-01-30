@@ -14,7 +14,7 @@ namespace Edanoue.StateMachine.Tests
     /// 自動販売機クラスそのものというよりかは
     /// StateMachine の挙動に重きをおいてテストを書いています
     /// </summary>
-    public class VendingMachineTest
+    public class TS_VendingMachine
     {
         [Test]
         public void 自動販売機生成のテスト()

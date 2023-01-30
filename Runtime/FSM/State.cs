@@ -38,12 +38,6 @@ namespace Edanoue.StateMachine
             }
 
             /// <summary>
-            /// 自身を管理するStateMachineへの参照
-            /// </summary>
-            protected ITriggerReceiver<TTrigger> StateMachine => _stateMachine;
-
-
-            /// <summary>
             /// 自身を管理するStateMachineの持つコンテキストへの参照
             /// </summary>
             protected TContext Context => _stateMachine.Context;
@@ -54,24 +48,27 @@ namespace Edanoue.StateMachine
             {
             }
 
+
             /// <summary>
             /// ステート突入時に一度だけ呼ばれる関数
             /// </summary>
-            protected internal virtual void OnEnter()
+            protected internal virtual void OnEnter(IRunningStateMachine<TTrigger> stateMachine)
             {
             }
 
             /// <summary>
-            /// ステート更新時に呼ばれる関数
+            /// <see cref="StateMachine{TContext,TTrigger}.UpdateState"/>> を呼ばれた際に, 遷移先が決定していない場合に呼ばれる関数です
             /// </summary>
-            protected internal virtual void OnUpdate()
+            protected internal virtual void OnUpdate(IRunningStateMachine<TTrigger> stateMachine)
             {
             }
 
             /// <summary>
-            /// ステートを抜ける際に一度だけ呼ばれる関数
+            /// ステートを抜ける際に一度だけ呼ばれる関数です
+            /// 既に遷移先が仮で決定しており, この 関数が終わると次の State に遷移します.
+            /// ここで遷移先を変更すると, 仮で決定している遷移先を上書きします.
             /// </summary>
-            protected internal virtual void OnExit()
+            protected internal virtual void OnExit(IRunningStateMachine<TTrigger> stateMachine)
             {
             }
         }

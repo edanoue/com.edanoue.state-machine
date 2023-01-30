@@ -13,7 +13,7 @@ namespace Edanoue.StateMachine
     /// <typeparam name="TContext">コンテキストの型</typeparam>
     /// <typeparam name="TTrigger">トリガーの型</typeparam>
     public partial class StateMachine<TContext, TTrigger> :
-        ITriggerReceiver<TTrigger>,
+        IRunningStateMachine<TTrigger>,
         IDisposable
     {
         private readonly HashSet<State> _stateList = new();
@@ -65,9 +65,8 @@ namespace Edanoue.StateMachine
         /// State Machine に 発生したTrigger を送信する関数
         /// </summary>
         /// <param name="trigger"></param>
-        /// <param name="autoUpdate"></param>
         /// <returns>現在のStateに指定のTriggerが登録されていればtrue</returns>
-        public bool SendTrigger(TTrigger trigger, bool autoUpdate = false)
+        public bool SendTrigger(TTrigger trigger)
         {
             if (!IsRunning)
             {
@@ -75,17 +74,13 @@ namespace Edanoue.StateMachine
             }
 
             // 現在の State の transitionMap を見て, 移行先のStateが存在する場合, nextState を更新する
-            if (!_currentState!._transitionTable.TryGetValue(trigger, out _nextState))
+            var foundNextState = _currentState!._transitionTable.TryGetValue(trigger, out var nextState);
+            if (foundNextState)
             {
-                return false;
+                _nextState = nextState;
             }
 
-            if (autoUpdate)
-            {
-                UpdateState();
-            }
-
-            return true;
+            return foundNextState;
         }
 
         /// <summary>
@@ -102,7 +97,7 @@ namespace Edanoue.StateMachine
                 _nextState = null;
 
                 // ステートを開始する
-                _currentState.OnEnter();
+                _currentState.OnEnter(this);
 
                 // ここですでに次のステートが決定している可能性がある
                 // まだ決定していない場合は処理を抜ける
@@ -116,21 +111,21 @@ namespace Edanoue.StateMachine
             if (_nextState is null)
             {
                 // 現在のStateのUpdate関数を呼ぶ
-                _currentState!.OnUpdate();
+                _currentState!.OnUpdate(this);
             }
 
             // 次の遷移先が代入されていたら, ステートを切り替える
             while (_nextState is not null)
             {
                 // 以前のステートを終了する
-                _currentState!.OnExit();
+                _currentState!.OnExit(this);
 
                 // ステートの切り替え処理
                 _currentState = _nextState;
                 _nextState = null;
 
                 // 次のステートを開始する
-                _currentState.OnEnter();
+                _currentState.OnEnter(this);
             }
         }
 
@@ -162,10 +157,13 @@ namespace Edanoue.StateMachine
                 throw new InvalidOperationException("すでに起動中のStateMachineです");
             }
 
+            // 同じ State 同士の遷移を許可する
+            /*
             if (typeof(TPrevState) == typeof(TNextState))
             {
                 throw new ArgumentException("TPrevState と TNextState が同じです.");
             }
+            */
 
             // Stateのインスタンスを取得する
             // まだStateが内部で作成されていなければ, このときに生成を行う
