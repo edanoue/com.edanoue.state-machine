@@ -102,7 +102,7 @@ namespace Edanoue.StateMachine
             if (_nextState is null)
             {
                 // 現在のStateのUpdate関数を呼ぶ
-                _currentState!.OnUpdate(this);
+                _currentState!.OnStayState(this);
             }
 
             // 次の遷移先が代入されていたら, ステートを切り替える

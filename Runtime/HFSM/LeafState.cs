@@ -24,7 +24,7 @@ namespace Edanoue.StateMachine
             // ReSharper disable once InconsistentNaming
             private readonly Dictionary<TTrigger, LeafState> _transitionTable = new();
 
-            protected internal virtual void OnUpdate(IRunningStateMachine<TTrigger> stateMachine)
+            protected internal virtual void OnStayState(IRunningStateMachine<TTrigger> stateMachine)
             {
             }
 
