@@ -20,6 +20,7 @@ namespace Edanoue.StateMachine
             ISubStateSetup<TContext, TTrigger>
         {
             private readonly HashSet<Node> _childNodeList = new();
+            internal         bool          _enterLock;
             private          Node?         _initialState;
 
             /// <summary>

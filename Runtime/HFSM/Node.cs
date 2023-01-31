@@ -41,14 +41,30 @@ namespace Edanoue.StateMachine
 
             internal void OnEnterInternal(IRunningStateMachine<TTrigger> stateMachine)
             {
-                _parent?.OnEnterInternal(stateMachine);
+                if (_parent is not null)
+                {
+                    if (!_parent._enterLock)
+                    {
+                        _parent.OnEnterInternal(stateMachine);
+                        _parent._enterLock = true;
+                    }
+                }
+
                 OnEnter(stateMachine);
             }
 
             internal void OnExitInternal(IRunningStateMachine<TTrigger> stateMachine)
             {
                 OnExit(stateMachine);
-                _parent?.OnEnterInternal(stateMachine);
+
+                if (_parent is not null)
+                {
+                    if (_parent._enterLock)
+                    {
+                        _parent.OnExitInternal(stateMachine);
+                        _parent._enterLock = false;
+                    }
+                }
             }
 
             protected virtual void OnEnter(IRunningStateMachine<TTrigger> stateMachine)
