@@ -65,10 +65,10 @@ namespace Edanoue.StateMachine
 
             /// <summary>
             /// ステートを抜ける際に一度だけ呼ばれる関数です
-            /// 既に遷移先が仮で決定しており, この 関数が終わると次の State に遷移します.
-            /// ここで遷移先を変更すると, 仮で決定している遷移先を上書きします.
+            /// 既に遷移先が決定しており, この 関数が終わると次の State に遷移します.
+            /// ここでの遷移先の変更は行えません.
             /// </summary>
-            protected internal virtual void OnExit(IRunningStateMachine<TTrigger> stateMachine)
+            protected internal virtual void OnExit()
             {
             }
         }

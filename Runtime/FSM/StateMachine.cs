@@ -118,7 +118,7 @@ namespace Edanoue.StateMachine
             while (_nextState is not null)
             {
                 // 以前のステートを終了する
-                _currentState!.OnExit(this);
+                _currentState!.OnExit();
 
                 // ステートの切り替え処理
                 _currentState = _nextState;

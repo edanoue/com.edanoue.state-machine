@@ -39,39 +39,44 @@ namespace Edanoue.StateMachine
             {
             }
 
-            internal void OnEnterInternal(IRunningStateMachine<TTrigger> stateMachine)
+            internal void OnEnterStateInternal(IRunningStateMachine<TTrigger> stateMachine)
             {
+                // 親が存在していたら(GroupState に所属していたら) 親の OnEnter を呼ぶ
                 if (_parent is not null)
                 {
+                    // 何回も呼ばれるのを防止するための ロックの確認を行う
                     if (!_parent._enterLock)
                     {
-                        _parent.OnEnterInternal(stateMachine);
+                        _parent.OnEnterStateInternal(stateMachine);
+                        // 一度親の OnEnter を呼んだらロックをこちらから掛けておく
                         _parent._enterLock = true;
                     }
                 }
 
-                OnEnter(stateMachine);
+                OnEnterState(stateMachine);
             }
 
-            internal void OnExitInternal(IRunningStateMachine<TTrigger> stateMachine)
+            internal void OnExitStateInternal(LeafState nextState)
             {
-                OnExit(stateMachine);
+                OnExitState();
 
+                // 親が存在していたら(GroupState に所属していたら)
                 if (_parent is not null)
                 {
-                    if (_parent._enterLock)
+                    // この時点で 遷移先は確定しているため, 親 の子孫に当たるかどうかを確認する
+                    if (!_parent.IsDescendantState(nextState))
                     {
-                        _parent.OnExitInternal(stateMachine);
+                        _parent.OnExitStateInternal(nextState);
                         _parent._enterLock = false;
                     }
                 }
             }
 
-            protected virtual void OnEnter(IRunningStateMachine<TTrigger> stateMachine)
+            protected virtual void OnEnterState(IRunningStateMachine<TTrigger> stateMachine)
             {
             }
 
-            protected virtual void OnExit(IRunningStateMachine<TTrigger> stateMachine)
+            protected virtual void OnExitState()
             {
             }
         }

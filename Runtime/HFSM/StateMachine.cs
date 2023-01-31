@@ -87,7 +87,7 @@ namespace Edanoue.StateMachine
                 _nextState = null;
 
                 // ステートを開始する
-                _currentState.OnEnterInternal(this);
+                _currentState.OnEnterStateInternal(this);
 
                 // ここですでに次のステートが決定している可能性がある
                 // まだ決定していない場合は処理を抜ける
@@ -109,14 +109,14 @@ namespace Edanoue.StateMachine
             while (_nextState is not null)
             {
                 // 以前のステートを終了する
-                _currentState!.OnExitInternal(this);
+                _currentState!.OnExitStateInternal(_nextState);
 
                 // ステートの切り替え処理
                 _currentState = _nextState;
                 _nextState = null;
 
                 // 次のステートを開始する
-                _currentState.OnEnterInternal(this);
+                _currentState.OnEnterStateInternal(this);
             }
         }
 

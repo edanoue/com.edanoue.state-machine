@@ -72,6 +72,29 @@ namespace Edanoue.StateMachine
                 _initialState = initialState;
             }
 
+            internal bool IsDescendantState(LeafState state)
+            {
+                foreach (var child in _childNodeList)
+                {
+                    if (child == state)
+                    {
+                        return true;
+                    }
+
+                    if (child is not GroupState gs)
+                    {
+                        continue;
+                    }
+
+                    if (gs.IsDescendantState(state))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
             internal LeafState GetInitialState()
             {
                 if (_initialState is null)

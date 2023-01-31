@@ -10,9 +10,19 @@ namespace Edanoue.StateMachine.Tests
 
     public class TS_HFSM
     {
+        private int _停止中GroupのOnEnterが呼ばれた回数;
+        private int _停止中GroupのOnExitが呼ばれた回数;
+        private int _監視状態GroupのOnEnterが呼ばれた回数;
+        private int _監視状態GroupのOnExitが呼ばれた回数;
+
         [Test]
         public void StateMachine生成のテスト()
         {
+            _監視状態GroupのOnEnterが呼ばれた回数 = 0;
+            _監視状態GroupのOnExitが呼ばれた回数 = 0;
+            _停止中GroupのOnEnterが呼ばれた回数 = 0;
+            _停止中GroupのOnExitが呼ばれた回数 = 0;
+
             // StateMachine を生成する
             var sm = new StateMachine(this);
             Assert.That(sm, Is.Not.Null);
@@ -30,20 +40,51 @@ namespace Edanoue.StateMachine.Tests
             // 現在の State を確認する
             Assert.That(sm.IsCurrentState<監視状態.巡回中>(), Is.True);
 
+            // OnEnter の確認
+            Assert.That(_監視状態GroupのOnEnterが呼ばれた回数, Is.EqualTo(1));
+            Assert.That(_監視状態GroupのOnExitが呼ばれた回数, Is.EqualTo(0));
+
             // 遷移の確認
             sm.SendTrigger(Trigger.かなり歩いてつかれた);
             sm.UpdateState();
             Assert.That(sm.IsCurrentState<監視状態.停止中.右を見ている>(), Is.True);
+
+            // OnEnter の確認
+            Assert.That(_監視状態GroupのOnEnterが呼ばれた回数, Is.EqualTo(1));
+            Assert.That(_監視状態GroupのOnExitが呼ばれた回数, Is.EqualTo(0));
+            Assert.That(_停止中GroupのOnEnterが呼ばれた回数, Is.EqualTo(1));
+            Assert.That(_停止中GroupのOnExitが呼ばれた回数, Is.EqualTo(0));
+
+            // 遷移の確認
+            sm.SendTrigger(Trigger.つかれがとれた);
+            sm.UpdateState();
+            Assert.That(sm.IsCurrentState<監視状態.巡回中>(), Is.True);
+
+            // OnEnter の確認
+            Assert.That(_監視状態GroupのOnEnterが呼ばれた回数, Is.EqualTo(1));
+            Assert.That(_監視状態GroupのOnExitが呼ばれた回数, Is.EqualTo(0));
+            Assert.That(_停止中GroupのOnEnterが呼ばれた回数, Is.EqualTo(1));
+            Assert.That(_停止中GroupのOnExitが呼ばれた回数, Is.EqualTo(1));
 
             // 遷移の確認 (監視状態のどこにいても戦闘状態に)
             sm.SendTrigger(Trigger.敵を発見した);
             sm.UpdateState();
             Assert.That(sm.IsCurrentState<戦闘状態.距離を取る>(), Is.True);
 
+            // OnEnter の確認
+            Assert.That(_監視状態GroupのOnEnterが呼ばれた回数, Is.EqualTo(1));
+            Assert.That(_監視状態GroupのOnExitが呼ばれた回数, Is.EqualTo(1));
+            Assert.That(_停止中GroupのOnEnterが呼ばれた回数, Is.EqualTo(1));
+            Assert.That(_停止中GroupのOnExitが呼ばれた回数, Is.EqualTo(1));
+
             // 遷移の確認
             sm.SendTrigger(Trigger.敵を見失った);
             sm.UpdateState();
             Assert.That(sm.IsCurrentState<監視状態.巡回中>(), Is.True);
+
+            // OnEnter の確認
+            Assert.That(_監視状態GroupのOnEnterが呼ばれた回数, Is.EqualTo(2));
+            Assert.That(_監視状態GroupのOnExitが呼ばれた回数, Is.EqualTo(1));
         }
 
 
@@ -68,6 +109,16 @@ namespace Edanoue.StateMachine.Tests
                 group.SetInitialState<巡回中>();
             }
 
+            protected override void OnEnterState(IRunningStateMachine<Trigger> stateMachine)
+            {
+                Context._監視状態GroupのOnEnterが呼ばれた回数++;
+            }
+
+            protected override void OnExitState()
+            {
+                Context._監視状態GroupのOnExitが呼ばれた回数++;
+            }
+
             internal class 巡回中 : StateMachine.LeafState
             {
             }
@@ -79,6 +130,16 @@ namespace Edanoue.StateMachine.Tests
                     group.AddTransition<右を見ている, 左を見ている>(Trigger.右を見終わった);
                     group.AddTransition<左を見ている, 右を見ている>(Trigger.左を見終わった);
                     group.SetInitialState<右を見ている>();
+                }
+
+                protected override void OnEnterState(IRunningStateMachine<Trigger> stateMachine)
+                {
+                    Context._停止中GroupのOnEnterが呼ばれた回数++;
+                }
+
+                protected override void OnExitState()
+                {
+                    Context._停止中GroupのOnExitが呼ばれた回数++;
                 }
 
                 internal class 右を見ている : StateMachine.LeafState
