@@ -52,14 +52,14 @@ namespace Edanoue.StateMachine
             /// <summary>
             /// ステート突入時に一度だけ呼ばれる関数
             /// </summary>
-            protected internal virtual void OnEnter(IRunningStateMachine<TTrigger> stateMachine)
+            protected internal virtual void OnEnterState(IRunningStateMachine<TTrigger> stateMachine)
             {
             }
 
             /// <summary>
             /// <see cref="StateMachine{TContext,TTrigger}.UpdateState"/>> を呼ばれた際に, 遷移先が決定していない場合に呼ばれる関数です
             /// </summary>
-            protected internal virtual void OnUpdate(IRunningStateMachine<TTrigger> stateMachine)
+            protected internal virtual void OnStayState(IRunningStateMachine<TTrigger> stateMachine)
             {
             }
 
@@ -68,7 +68,7 @@ namespace Edanoue.StateMachine
             /// 既に遷移先が決定しており, この 関数が終わると次の State に遷移します.
             /// ここでの遷移先の変更は行えません.
             /// </summary>
-            protected internal virtual void OnExit()
+            protected internal virtual void OnExitState()
             {
             }
         }

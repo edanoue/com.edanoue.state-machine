@@ -97,7 +97,7 @@ namespace Edanoue.StateMachine
                 _nextState = null;
 
                 // ステートを開始する
-                _currentState.OnEnter(this);
+                _currentState.OnEnterState(this);
 
                 // ここですでに次のステートが決定している可能性がある
                 // まだ決定していない場合は処理を抜ける
@@ -111,21 +111,21 @@ namespace Edanoue.StateMachine
             if (_nextState is null)
             {
                 // 現在のStateのUpdate関数を呼ぶ
-                _currentState!.OnUpdate(this);
+                _currentState!.OnStayState(this);
             }
 
             // 次の遷移先が代入されていたら, ステートを切り替える
             while (_nextState is not null)
             {
                 // 以前のステートを終了する
-                _currentState!.OnExit();
+                _currentState!.OnExitState();
 
                 // ステートの切り替え処理
                 _currentState = _nextState;
                 _nextState = null;
 
                 // 次のステートを開始する
-                _currentState.OnEnter(this);
+                _currentState.OnEnterState(this);
             }
         }
 
