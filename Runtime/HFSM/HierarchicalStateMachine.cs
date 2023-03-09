@@ -14,13 +14,16 @@ namespace Edanoue.StateMachine
     /// <typeparam name="TTrigger">トリガーの型</typeparam>
     public partial class HierarchicalStateMachine<TContext, TTrigger> :
         IRunningStateMachine<TTrigger>,
+        IStateBuilder<TContext, TTrigger>,
         IDisposable
     {
         private readonly HashSet<Node> _stateList = new();
 
         // ReSharper disable once InconsistentNaming
         private protected LeafState? _currentState;
-        private           LeafState? _nextState;
+
+        private bool       _isDisposed;
+        private LeafState? _nextState;
 
         /// <summary>
         /// StateMachine の初期化を行う
@@ -33,7 +36,6 @@ namespace Edanoue.StateMachine
                 throw new ArgumentNullException(nameof(context));
             }
 
-            // メンバーの初期化を行う
             Context = context;
         }
 
@@ -51,10 +53,17 @@ namespace Edanoue.StateMachine
 
         public void Dispose()
         {
+            if (_isDisposed)
+            {
+                return;
+            }
+
             foreach (var state in _stateList)
             {
                 state.Dispose();
             }
+
+            _isDisposed = true;
         }
 
         /// <summary>
@@ -64,71 +73,24 @@ namespace Edanoue.StateMachine
         /// <returns>現在のStateに指定のTriggerが登録されていればtrue</returns>
         public bool SendTrigger(TTrigger trigger)
         {
+            if (_isDisposed)
+            {
+                throw new ObjectDisposedException("State machine was already disposed.");
+            }
+
             if (!IsRunning)
             {
-                throw new InvalidOperationException("ステートマシンはまだ起動していません.");
+                throw new InvalidOperationException("State machine is not running.");
             }
 
             // 現在の State の transitionMap を見て, 移行先のStateが存在する場合, nextState を更新する
-            return _currentState!.TryGetNextNode(trigger, out _nextState);
-        }
-
-        /// <summary>
-        /// StateMachineを更新する関数
-        /// </summary>
-        public void UpdateState()
-        {
-            // 初回のみ呼ばれる部分
-            if (!IsRunning)
+            if (_currentState!.TryGetNextNode(trigger, out var nextState))
             {
-                // ステートを切り替える
-                // 初期ステートが設定されていないならエラー
-                _currentState = _nextState ?? throw new InvalidOperationException("開始ステートが設定されていません");
-                _nextState = null;
-
-                // ステートを開始する
-                _currentState.OnEnterStateInternal(this);
-
-                // ここですでに次のステートが決定している可能性がある
-                // まだ決定していない場合は処理を抜ける
-                if (_nextState is null)
-                {
-                    return;
-                }
+                _nextState = nextState;
+                return true;
             }
 
-            // 以降の処理では CurrentState は notnull
-            // 次のState が確定していない場合のみ, Update が呼ばれる
-            if (_nextState is null)
-            {
-                // 現在のStateのUpdate関数を呼ぶ
-                _currentState!.OnStayState(this);
-            }
-
-            // 次の遷移先が代入されていたら, ステートを切り替える
-            while (_nextState is not null)
-            {
-                // 以前のステートを終了する
-                _currentState!.OnExitStateInternal(_nextState);
-
-                // ステートの切り替え処理
-                _currentState = _nextState;
-                _nextState = null;
-
-                // 次のステートを開始する
-                _currentState.OnEnterStateInternal(this);
-            }
-        }
-
-        /// <summary>
-        /// 指定した State が現在の State なら True
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
-        public bool IsCurrentState<T>()
-            where T : LeafState
-        {
-            return _currentState is T;
+            return false;
         }
 
         /// <summary>
@@ -143,6 +105,11 @@ namespace Edanoue.StateMachine
             where TPrevState : Node, new()
             where TNextState : Node, new()
         {
+            if (_isDisposed)
+            {
+                throw new ObjectDisposedException("State machine was already disposed.");
+            }
+
             if (IsRunning)
             {
                 throw new InvalidOperationException("すでに起動中のStateMachineです");
@@ -226,9 +193,19 @@ namespace Edanoue.StateMachine
         public void SetInitialState<T>()
             where T : Node, new()
         {
+            if (_isDisposed)
+            {
+                throw new ObjectDisposedException("State machine was already disposed.");
+            }
+
             if (IsRunning)
             {
                 throw new InvalidOperationException("すでに起動中のStateMachineです");
+            }
+
+            if (_nextState is not null)
+            {
+                throw new InvalidOperationException("すでに InitialState が設定されています");
             }
 
             var initialState = GetOrCreateState<T>();
@@ -237,8 +214,81 @@ namespace Edanoue.StateMachine
             {
                 LeafState ls => ls,
                 GroupState gs => gs.GetInitialState(),
-                _ => throw new InvalidOperationException("初期Stateが解決出来ませんでした")
+                _ => throw new InvalidProgramException("初期Stateが解決出来ませんでした")
             };
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="builder"></param>
+        protected virtual void SetupStates(IStateBuilder<TContext, TTrigger> builder)
+        {
+        }
+
+        /// <summary>
+        /// StateMachineを更新する関数
+        /// </summary>
+        public void UpdateState()
+        {
+            if (_isDisposed)
+            {
+                throw new ObjectDisposedException("State machine was already disposed.");
+            }
+
+            // 初回のみ呼ばれる部分
+            if (!IsRunning)
+            {
+                // ステートの初期化 を行う
+                SetupStates(this);
+
+                // ステートを切り替える
+                // 初期ステートが設定されていないならエラー
+                _currentState = _nextState ?? throw new InvalidOperationException("開始ステートが設定されていません");
+                _nextState = null;
+
+                // ステートを開始する
+                _currentState.OnEnterStateInternal(this);
+
+                // ここですでに次のステートが決定している可能性がある
+                // まだ決定していない場合は処理を抜ける
+                if (_nextState is null)
+                {
+                    return;
+                }
+            }
+
+            // 以降の処理では CurrentState は notnull
+            // 次のState が確定していない場合のみ, Update が呼ばれる
+            if (_nextState is null)
+            {
+                // 現在のStateのUpdate関数を呼ぶ
+                _currentState!.OnStayState(this);
+            }
+
+            // 次の遷移先が代入されていたら, ステートを切り替える
+            while (_nextState is not null)
+            {
+                // 以前のステートを終了する
+                _currentState!.OnExitStateInternal(_nextState);
+
+                // ステートの切り替え処理
+                _currentState = _nextState;
+                _nextState = null;
+
+                // 次のステートを開始する
+                _currentState.OnEnterStateInternal(this);
+            }
+        }
+
+        /// <summary>
+        /// 指定した State が現在の State なら True
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public bool IsCurrentState<T>()
+            where T : LeafState
+        {
+            return _currentState is T;
         }
 
         /// <summary>
