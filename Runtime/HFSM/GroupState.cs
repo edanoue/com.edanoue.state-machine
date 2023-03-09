@@ -17,7 +17,7 @@ namespace Edanoue.StateMachine
     {
         public abstract class GroupState :
             Node,
-            ISubStateSetup<TContext, TTrigger>
+            IStateBuilder<TContext, TTrigger>
         {
             private readonly HashSet<Node> _childNodeList = new();
             internal         bool          _enterLock;
@@ -28,7 +28,7 @@ namespace Edanoue.StateMachine
             /// <param name="trigger"></param>
             /// <typeparam name="TPrevState"></typeparam>
             /// <typeparam name="TNextState"></typeparam>
-            void ISubStateSetup<TContext, TTrigger>.AddTransition<TPrevState, TNextState>(TTrigger trigger)
+            void IStateBuilder<TContext, TTrigger>.AddTransition<TPrevState, TNextState>(TTrigger trigger)
             {
                 _stateMachine.AddTransition<TPrevState, TNextState>(trigger);
 
@@ -54,7 +54,7 @@ namespace Edanoue.StateMachine
             /// </summary>
             /// <typeparam name="T"></typeparam>
             /// <exception cref="InvalidOperationException"></exception>
-            void ISubStateSetup<TContext, TTrigger>.SetInitialState<T>()
+            void IStateBuilder<TContext, TTrigger>.SetInitialState<T>()
             {
                 if (_stateMachine.IsRunning)
                 {
@@ -135,7 +135,8 @@ namespace Edanoue.StateMachine
             /// <summary>
             /// この GroupState 内部の遷移を構築する.
             /// </summary>
-            protected internal abstract void SetupSubStates(ISubStateSetup<TContext, TTrigger> group);
+            /// <param name="builder"></param>
+            protected internal abstract void SetupSubStates(IStateBuilder<TContext, TTrigger> builder);
         }
     }
 }

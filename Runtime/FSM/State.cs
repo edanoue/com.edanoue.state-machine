@@ -57,7 +57,7 @@ namespace Edanoue.StateMachine
             }
 
             /// <summary>
-            /// <see cref="StateMachine{TContext,TTrigger}.UpdateState"/>> を呼ばれた際に, 遷移先が決定していない場合に呼ばれる関数です
+            /// <see cref="StateMachine{TContext,TTrigger}.UpdateState" />> を呼ばれた際に, 遷移先が決定していない場合に呼ばれる関数です
             /// </summary>
             protected internal virtual void OnStayState(IRunningStateMachine<TTrigger> stateMachine)
             {
