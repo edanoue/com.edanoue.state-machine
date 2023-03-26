@@ -86,6 +86,17 @@ namespace Edanoue.HybridGraph
 
         INode INetworkItem.RootNode => _initialState!.RootNode;
 
+        public void Dispose()
+        {
+            foreach (var child in _children)
+            {
+                child.Dispose();
+            }
+
+            _children.Clear();
+            OnDestroy();
+        }
+
         void IStateBuilder.SetInitialState<TState>()
         {
             if (_initialState is not null)
@@ -165,6 +176,10 @@ namespace Edanoue.HybridGraph
         }
 
         protected virtual void OnExit()
+        {
+        }
+
+        protected virtual void OnDestroy()
         {
         }
 

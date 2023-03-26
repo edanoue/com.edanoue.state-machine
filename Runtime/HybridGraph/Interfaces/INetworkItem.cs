@@ -1,9 +1,11 @@
 ﻿// Copyright Edanoue, Inc. All Rights Reserved.
 
 #nullable enable
+using System;
+
 namespace Edanoue.HybridGraph
 {
-    public interface INetworkItem
+    public interface INetworkItem : IDisposable
     {
         /// <summary>
         /// </summary>
@@ -26,15 +28,5 @@ namespace Edanoue.HybridGraph
         internal void OnStayInternal();
 
         internal void OnExitInternal(INetworkItem nextNode);
-    }
-
-    public interface IContainer : INetworkItem
-    {
-        internal bool IsDescendantNode(INetworkItem node);
-    }
-
-    public interface INode : INetworkItem
-    {
-        internal bool TryGetNextNode(int trigger, out INode nextNode);
     }
 }

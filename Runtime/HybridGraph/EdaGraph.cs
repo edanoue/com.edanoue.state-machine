@@ -5,14 +5,16 @@ using System;
 
 namespace Edanoue.HybridGraph
 {
-    public class HybridGraph : IDisposable
+    public class EdaGraph : IDisposable
     {
-        private INode  _currentNode;
-        private bool   _disposed;
-        private INode? _nextNode;
+        private readonly IContainer _container;
+        private          INode      _currentNode;
+        private          bool       _disposed;
+        private          INode?     _nextNode;
 
-        private HybridGraph(IContainer container)
+        private EdaGraph(IContainer container)
         {
+            _container = container;
             _currentNode = container.RootNode;
             _currentNode.OnEnterInternal();
 
@@ -26,9 +28,10 @@ namespace Edanoue.HybridGraph
         {
             if (_disposed)
             {
-                throw new ObjectDisposedException(nameof(HybridGraph));
+                throw new ObjectDisposedException(nameof(EdaGraph));
             }
 
+            _container.Dispose();
             _disposed = true;
         }
 
@@ -36,7 +39,7 @@ namespace Edanoue.HybridGraph
         /// </summary>
         /// <param name="blackboard"></param>
         /// <typeparam name="T"></typeparam>
-        public static HybridGraph Run<T>(object blackboard)
+        public static EdaGraph Run<T>(object blackboard)
             where T : class, IContainer, new()
         {
             // Initialize container (StateMachine or BehaviourTree)
@@ -44,7 +47,7 @@ namespace Edanoue.HybridGraph
             container.Initialize(blackboard, null);
 
             // Run container
-            return new HybridGraph(container);
+            return new EdaGraph(container);
         }
 
         /// <summary>
@@ -53,7 +56,7 @@ namespace Edanoue.HybridGraph
         {
             if (_disposed)
             {
-                throw new ObjectDisposedException(nameof(HybridGraph));
+                throw new ObjectDisposedException(nameof(EdaGraph));
             }
 
             if (_nextNode is null)
@@ -85,7 +88,7 @@ namespace Edanoue.HybridGraph
         {
             if (_disposed)
             {
-                throw new ObjectDisposedException(nameof(HybridGraph));
+                throw new ObjectDisposedException(nameof(EdaGraph));
             }
 
             if (_currentNode.TryGetNextNode(trigger, out var nextNode))

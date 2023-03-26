@@ -3,6 +3,7 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace Edanoue.HybridGraph
 {
@@ -18,12 +19,30 @@ namespace Edanoue.HybridGraph
         // ReSharper disable once InconsistentNaming
         private readonly Dictionary<int, INode> _transitionTable = new();
 
+        private CancellationTokenSource? _onExitCts;
+
         private IContainer? _parent;
 
         /// <summary>
         /// Get the blackboard.
         /// </summary>
         protected TBlackboard Blackboard = default!;
+
+        /// <summary>
+        /// Get the cancellation token raised when the State is exited.
+        /// </summary>
+        protected CancellationToken CancellationTokenOnExit
+        {
+            get
+            {
+                if (_onExitCts is not null)
+                {
+                    return _onExitCts.Token;
+                }
+
+                throw new InvalidOperationException("CancellationTokenOnExit is available when OnEnter or OnStay.");
+            }
+        }
 
         void INetworkItem.Initialize(object blackboard, IContainer? parent)
         {
@@ -45,6 +64,7 @@ namespace Edanoue.HybridGraph
         void INetworkItem.OnEnterInternal()
         {
             _parent?.OnEnterInternal();
+            _onExitCts = new CancellationTokenSource();
             OnEnter();
         }
 
@@ -55,6 +75,11 @@ namespace Edanoue.HybridGraph
 
         void INetworkItem.OnExitInternal(INetworkItem nextNode)
         {
+            // CancellationTokenをキャンセルする
+            _onExitCts?.Cancel();
+            _onExitCts?.Dispose();
+            _onExitCts = null;
+
             OnExit();
             _parent?.OnExitInternal(nextNode);
         }
@@ -65,6 +90,15 @@ namespace Edanoue.HybridGraph
         }
 
         INode INetworkItem.RootNode => this;
+
+        public void Dispose()
+        {
+            // CancellationTokenをキャンセルする
+            _onExitCts?.Cancel();
+            _onExitCts?.Dispose();
+
+            OnDestroy();
+        }
 
         protected virtual void OnInitialize()
         {
@@ -79,6 +113,10 @@ namespace Edanoue.HybridGraph
         }
 
         protected virtual void OnExit()
+        {
+        }
+
+        protected virtual void OnDestroy()
         {
         }
     }

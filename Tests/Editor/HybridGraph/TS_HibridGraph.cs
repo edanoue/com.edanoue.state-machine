@@ -13,7 +13,7 @@ namespace Edanoue.HybridGraph.Tests
         {
             // StateMachine を起動する
             var blackboard = new BlackboardMock();
-            var graph = HybridGraph.Run<MockStateMachine>(blackboard);
+            var graph = EdaGraph.Run<MockStateMachine>(blackboard);
 
             // 起動時点で Idle に入っている
             Assert.That(blackboard.IdleEnterCount, Is.EqualTo(1));
