@@ -9,8 +9,8 @@ namespace Edanoue.HybridGraph
 {
     internal sealed class BtRootNode : IGraphNode, IRootNode
     {
-        private readonly List<BtExecutableNode> _children = new(1);
-        private          object                 _blackboard;
+        private readonly List<BtExecutableNode> _children   = new(1);
+        private          object                 _blackboard = null!;
 
         public int ChildCount => _children.Count;
 
