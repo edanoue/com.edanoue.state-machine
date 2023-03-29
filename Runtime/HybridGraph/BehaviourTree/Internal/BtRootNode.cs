@@ -48,12 +48,10 @@ namespace Edanoue.HybridGraph
 
         void IGraphItem.OnUpdateInternal()
         {
-            throw new NotImplementedException();
         }
 
         void IGraphItem.OnExitInternal(IGraphItem nextNode)
         {
-            throw new NotImplementedException();
         }
 
         bool IGraphNode.TryGetNextNode(int trigger, out IGraphNode nextNode)
