@@ -2,7 +2,8 @@
   "name": "Edanoue.StateMachine.EditorTests",
   "rootNamespace": "Edanoue.StateMachine.Tests",
   "references": [
-    "GUID:2372f725869b68c40a819387032e7963"
+      "GUID:2372f725869b68c40a819387032e7963",
+      "GUID:f51ebe6a0ceec4240a699833d6309b23"
   ],
   "includePlatforms": [
     "Editor"
