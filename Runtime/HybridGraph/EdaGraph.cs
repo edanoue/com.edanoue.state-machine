@@ -7,12 +7,12 @@ namespace Edanoue.HybridGraph
 {
     public class EdaGraph : IDisposable
     {
-        private readonly IContainer _container;
-        private          INode      _currentNode;
-        private          bool       _disposed;
-        private          INode?     _nextNode;
+        private readonly IGraphBox   _container;
+        private          IGraphNode  _currentNode;
+        private          bool        _disposed;
+        private          IGraphNode? _nextNode;
 
-        private EdaGraph(IContainer container)
+        private EdaGraph(IGraphBox container)
         {
             _container = container;
             _currentNode = container.RootNode;
@@ -40,7 +40,7 @@ namespace Edanoue.HybridGraph
         /// <param name="blackboard"></param>
         /// <typeparam name="T"></typeparam>
         public static EdaGraph Run<T>(object blackboard)
-            where T : class, IContainer, new()
+            where T : class, IGraphBox, new()
         {
             // Initialize container (StateMachine or BehaviourTree)
             var container = new T();
@@ -62,7 +62,7 @@ namespace Edanoue.HybridGraph
             if (_nextNode is null)
             {
                 // 現在のStateのUpdate関数を呼ぶ
-                _currentNode.OnStayInternal();
+                _currentNode.OnUpdateInternal();
             }
 
             // 次の遷移先が代入されていたら, ステートを切り替える

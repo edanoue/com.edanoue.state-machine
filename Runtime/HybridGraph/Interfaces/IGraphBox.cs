@@ -3,7 +3,8 @@
 #nullable enable
 namespace Edanoue.HybridGraph
 {
-    public interface IBehaviourBuilder
+    public interface IGraphBox : IGraphItem
     {
+        internal bool IsDescendantNode(IGraphItem node);
     }
 }

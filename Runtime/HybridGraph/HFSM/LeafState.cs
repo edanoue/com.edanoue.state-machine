@@ -10,18 +10,18 @@ namespace Edanoue.HybridGraph
     /// <summary>
     /// </summary>
     /// <typeparam name="TBlackboard"></typeparam>
-    public abstract class LeafState<TBlackboard> : INode
+    public abstract class LeafState<TBlackboard> : IGraphNode
     {
         /// <summary>
         /// 内部用のTransition Table
         /// 遷移先を辞書形式で保存している
         /// </summary>
         // ReSharper disable once InconsistentNaming
-        private readonly Dictionary<int, INode> _transitionTable = new();
+        private readonly Dictionary<int, IGraphNode> _transitionTable = new();
 
         private CancellationTokenSource? _onExitCts;
 
-        private IContainer? _parent;
+        private IGraphBox? _parent;
 
         /// <summary>
         /// Get the blackboard.
@@ -44,14 +44,14 @@ namespace Edanoue.HybridGraph
             }
         }
 
-        void INetworkItem.Initialize(object blackboard, IContainer? parent)
+        void IGraphItem.Initialize(object blackboard, IGraphBox? parent)
         {
             Blackboard = (TBlackboard)blackboard;
             _parent = parent;
             OnInitialize();
         }
 
-        void INetworkItem.Connect(int trigger, INetworkItem nextNode)
+        void IGraphItem.Connect(int trigger, IGraphItem nextNode)
         {
             if (_transitionTable.ContainsKey(trigger))
             {
@@ -61,19 +61,19 @@ namespace Edanoue.HybridGraph
             _transitionTable.Add(trigger, nextNode.RootNode);
         }
 
-        void INetworkItem.OnEnterInternal()
+        void IGraphItem.OnEnterInternal()
         {
             _parent?.OnEnterInternal();
             _onExitCts = new CancellationTokenSource();
             OnEnter();
         }
 
-        void INetworkItem.OnStayInternal()
+        void IGraphItem.OnUpdateInternal()
         {
             OnStay();
         }
 
-        void INetworkItem.OnExitInternal(INetworkItem nextNode)
+        void IGraphItem.OnExitInternal(IGraphItem nextNode)
         {
             // CancellationTokenをキャンセルする
             _onExitCts?.Cancel();
@@ -84,12 +84,12 @@ namespace Edanoue.HybridGraph
             _parent?.OnExitInternal(nextNode);
         }
 
-        bool INode.TryGetNextNode(int trigger, out INode nextNode)
+        bool IGraphNode.TryGetNextNode(int trigger, out IGraphNode nextNode)
         {
             return _transitionTable.TryGetValue(trigger, out nextNode);
         }
 
-        INode INetworkItem.RootNode => this;
+        IGraphNode IGraphItem.RootNode => this;
 
         public void Dispose()
         {

@@ -9,7 +9,7 @@ namespace Edanoue.HybridGraph
         /// </summary>
         /// <typeparam name="T"></typeparam>
         public void SetInitialState<T>()
-            where T : class, INetworkItem, new();
+            where T : class, IGraphItem, new();
 
         /// <summary>
         /// </summary>
@@ -17,7 +17,7 @@ namespace Edanoue.HybridGraph
         /// <typeparam name="TPrev"></typeparam>
         /// <typeparam name="TNext"></typeparam>
         public void AddTransition<TPrev, TNext>(int trigger)
-            where TPrev : class, INetworkItem, new()
-            where TNext : class, INetworkItem, new();
+            where TPrev : class, IGraphItem, new()
+            where TNext : class, IGraphItem, new();
     }
 }

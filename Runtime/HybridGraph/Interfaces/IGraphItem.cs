@@ -5,28 +5,28 @@ using System;
 
 namespace Edanoue.HybridGraph
 {
-    public interface INetworkItem : IDisposable
+    public interface IGraphItem : IDisposable
     {
         /// <summary>
         /// </summary>
-        internal INode RootNode { get; }
+        internal IGraphNode RootNode { get; }
 
         /// <summary>
         /// </summary>
         /// <param name="blackboard"></param>
         /// <param name="parent"></param>
-        internal void Initialize(object blackboard, IContainer? parent);
+        internal void Initialize(object blackboard, IGraphBox? parent);
 
         /// <summary>
         /// </summary>
         /// <param name="trigger"></param>
         /// <param name="nextNode"></param>
-        internal void Connect(int trigger, INetworkItem nextNode);
+        internal void Connect(int trigger, IGraphItem nextNode);
 
         internal void OnEnterInternal();
 
-        internal void OnStayInternal();
+        internal void OnUpdateInternal();
 
-        internal void OnExitInternal(INetworkItem nextNode);
+        internal void OnExitInternal(IGraphItem nextNode);
     }
 }

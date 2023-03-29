@@ -6,18 +6,19 @@ using System.Collections.Generic;
 
 namespace Edanoue.HybridGraph
 {
-    public abstract class StateMachine<TBlackboard> : IContainer, IStateBuilder
+    public abstract class StateMachine<TBlackboard> : IGraphBox, IStateBuilder
     {
-        private readonly HashSet<INetworkItem> _children = new();
+        private readonly HashSet<IGraphItem> _children = new();
 
-        private INetworkItem? _initialState;
+        private IGraphItem? _initialState;
 
-        private bool _lockOnEnterInternal;
+        // If set, OnEnter will be called.
+        private bool _isNotifyOnEnter;
 
-        private   IContainer? _parent;
+        private   IGraphBox?  _parent;
         protected TBlackboard Blackboard = default!;
 
-        void INetworkItem.Initialize(object blackboard, IContainer? parent)
+        void IGraphItem.Initialize(object blackboard, IGraphBox? parent)
         {
             if (_initialState is not null)
             {
@@ -28,6 +29,7 @@ namespace Edanoue.HybridGraph
             _parent = parent;
             OnSetupStates(this);
 
+            // Setup validation check
             if (_initialState is null)
             {
                 throw new InvalidOperationException("Initial state is not set.");
@@ -36,7 +38,7 @@ namespace Edanoue.HybridGraph
             OnInitialize();
         }
 
-        void INetworkItem.Connect(int trigger, INetworkItem nextNode)
+        void IGraphItem.Connect(int trigger, IGraphItem nextNode)
         {
             foreach (var child in _children)
             {
@@ -44,26 +46,26 @@ namespace Edanoue.HybridGraph
             }
         }
 
-        void INetworkItem.OnEnterInternal()
+        void IGraphItem.OnEnterInternal()
         {
-            if (_lockOnEnterInternal)
+            if (_isNotifyOnEnter)
             {
                 return;
             }
 
-            _lockOnEnterInternal = true;
+            _isNotifyOnEnter = true;
             _parent?.OnEnterInternal();
             OnEnter();
         }
 
-        void INetworkItem.OnStayInternal()
+        void IGraphItem.OnUpdateInternal()
         {
             OnStay();
         }
 
-        void INetworkItem.OnExitInternal(INetworkItem nextNode)
+        void IGraphItem.OnExitInternal(IGraphItem nextNode)
         {
-            if (!_lockOnEnterInternal)
+            if (!_isNotifyOnEnter)
             {
                 return;
             }
@@ -76,15 +78,15 @@ namespace Edanoue.HybridGraph
 
             OnExit();
             _parent?.OnExitInternal(nextNode);
-            _lockOnEnterInternal = false;
+            _isNotifyOnEnter = false;
         }
 
-        bool IContainer.IsDescendantNode(INetworkItem node)
+        bool IGraphBox.IsDescendantNode(IGraphItem node)
         {
             return IsDescendantNode(node);
         }
 
-        INode INetworkItem.RootNode => _initialState!.RootNode;
+        IGraphNode IGraphItem.RootNode => _initialState!.RootNode;
 
         public void Dispose()
         {
@@ -114,7 +116,7 @@ namespace Edanoue.HybridGraph
             prevState.Connect(trigger, nextState);
         }
 
-        private bool IsDescendantNode(INetworkItem node)
+        private bool IsDescendantNode(IGraphItem node)
         {
             foreach (var child in _children)
             {
@@ -123,7 +125,7 @@ namespace Edanoue.HybridGraph
                     return true;
                 }
 
-                if (child is IContainer container)
+                if (child is IGraphBox container)
                 {
                     if (container.IsDescendantNode(node))
                     {
@@ -136,7 +138,7 @@ namespace Edanoue.HybridGraph
         }
 
         private TState GetOrCreateState<TState>()
-            where TState : class, INetworkItem, new()
+            where TState : class, IGraphItem, new()
         {
             // 既に生成されている State ならそれを返す
             foreach (var state in _children)
