@@ -9,11 +9,24 @@ namespace Edanoue.HybridGraph
 {
     public static class ActionExtensions
     {
+        private const string _DEFAULT_NAME = "Action";
+
+        /// <summary>
+        /// </summary>
+        /// <param name="self"></param>
+        /// <param name="action"></param>
+        /// <returns></returns>
         public static IActionNode Action(this ICompositePort self, Func<bool> action)
         {
-            return self.Action(action, "Action");
+            return self.Action(action, _DEFAULT_NAME);
         }
 
+        /// <summary>
+        /// </summary>
+        /// <param name="self"></param>
+        /// <param name="action"></param>
+        /// <param name="name"></param>
+        /// <returns></returns>
         public static IActionNode Action(this ICompositePort self, Func<bool> action, string name)
         {
             var node = new BtActionNodeAction(action, name);
@@ -21,11 +34,24 @@ namespace Edanoue.HybridGraph
             return node;
         }
 
+        /// <summary>
+        /// </summary>
+        /// <param name="self"></param>
+        /// <param name="action"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
         public static IActionNode Action<T>(this ICompositePort self, Func<T, bool> action)
         {
-            return self.Action(action, "Action");
+            return self.Action(action, _DEFAULT_NAME);
         }
 
+        /// <summary>
+        /// </summary>
+        /// <param name="self"></param>
+        /// <param name="action"></param>
+        /// <param name="name"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
         public static IActionNode Action<T>(this ICompositePort self, Func<T, bool> action, string name)
         {
             var node = new BtActionNodeAction<T>(action, name);

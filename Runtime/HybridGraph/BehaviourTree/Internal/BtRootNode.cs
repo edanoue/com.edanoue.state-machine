@@ -42,8 +42,8 @@ namespace Edanoue.HybridGraph
             UniTask.Void(async token =>
             {
                 var childNode = _children[0];
-                await childNode.ExecuteAsync(token);
-            }, default);
+                var result = await childNode.ExecuteAsync(token);
+            }, default); // TODO: token
         }
 
         void IGraphItem.OnUpdateInternal()

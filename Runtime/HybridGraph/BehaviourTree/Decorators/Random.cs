@@ -68,10 +68,15 @@ namespace Edanoue.HybridGraph
             _probability = 1.0d - Math.Clamp(probability, 0, 1);
         }
 
-        internal override bool CanExecute()
+        internal override bool CanEnter()
         {
             var r = _random.NextDouble();
             return r > _probability;
+        }
+
+        internal override bool CanExit()
+        {
+            return true;
         }
     }
 }

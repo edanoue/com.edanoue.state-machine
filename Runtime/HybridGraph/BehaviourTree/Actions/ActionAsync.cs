@@ -9,12 +9,27 @@ namespace Edanoue.HybridGraph
 {
     public static class ActionAsyncExtensions
     {
+        private const string _DEFAULT_NAME = "ActionAsync";
+
+        /// <summary>
+        /// </summary>
+        /// <param name="self"></param>
+        /// <param name="asyncAction"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
         public static IActionNode ActionAsync<T>(this ICompositePort self,
             Func<T, CancellationToken, UniTask<bool>> asyncAction)
         {
-            return self.ActionAsync(asyncAction, "ActionAsync");
+            return self.ActionAsync(asyncAction, _DEFAULT_NAME);
         }
 
+        /// <summary>
+        /// </summary>
+        /// <param name="self"></param>
+        /// <param name="asyncAction"></param>
+        /// <param name="name"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
         public static IActionNode ActionAsync<T>(this ICompositePort self,
             Func<T, CancellationToken, UniTask<bool>> asyncAction, string name)
         {

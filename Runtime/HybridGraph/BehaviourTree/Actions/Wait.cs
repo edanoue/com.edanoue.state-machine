@@ -9,11 +9,24 @@ namespace Edanoue.HybridGraph
 {
     public static class WaitExtensions
     {
+        private const string _DEFAULT_NAME = "Wait";
+
+        /// <summary>
+        /// </summary>
+        /// <param name="self"></param>
+        /// <param name="timeSpan"></param>
+        /// <returns></returns>
         public static IActionNode Wait(this ICompositePort self, TimeSpan timeSpan)
         {
-            return self.Wait(timeSpan, "Wait");
+            return self.Wait(timeSpan, _DEFAULT_NAME);
         }
 
+        /// <summary>
+        /// </summary>
+        /// <param name="self"></param>
+        /// <param name="timeSpan"></param>
+        /// <param name="name"></param>
+        /// <returns></returns>
         public static IActionNode Wait(this ICompositePort self, TimeSpan timeSpan, string name)
         {
             var node = new BtActionNodeWait(timeSpan, name);

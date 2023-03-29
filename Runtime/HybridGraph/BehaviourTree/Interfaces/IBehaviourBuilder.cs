@@ -15,7 +15,6 @@ namespace Edanoue.HybridGraph
 
     public interface IDecoratorNode
     {
-        public IDecoratorPort With { get; }
     }
 
     public interface ICompositeNode

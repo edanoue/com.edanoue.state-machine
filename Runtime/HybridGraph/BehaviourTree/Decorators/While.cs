@@ -5,9 +5,9 @@ using System;
 
 namespace Edanoue.HybridGraph
 {
-    public static class IfExtensions
+    public static class WhileExtensions
     {
-        private const string _DEFAULT_NAME = "If";
+        private const string _DEFAULT_NAME = "While";
 
         /// <summary>
         /// </summary>
@@ -15,9 +15,9 @@ namespace Edanoue.HybridGraph
         /// <param name="condition"></param>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public static IDecoratorNode If<T>(this IDecoratorPort self, Func<T, bool> condition)
+        public static IDecoratorNode While<T>(this IDecoratorPort self, Func<T, bool> condition)
         {
-            return self.If(condition, _DEFAULT_NAME);
+            return self.While(condition, _DEFAULT_NAME);
         }
 
         /// <summary>
@@ -27,19 +27,19 @@ namespace Edanoue.HybridGraph
         /// <param name="name"></param>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public static IDecoratorNode If<T>(this IDecoratorPort self, Func<T, bool> condition, string name)
+        public static IDecoratorNode While<T>(this IDecoratorPort self, Func<T, bool> condition, string name)
         {
-            var node = new BtDecoratorNodeIf<T>(condition, name);
+            var node = new BtDecoratorNodeWhile<T>(condition, name);
             self.AddDecorator(node);
             return node;
         }
     }
 
-    internal sealed class BtDecoratorNodeIf<T> : BtDecoratorNode
+    internal sealed class BtDecoratorNodeWhile<T> : BtDecoratorNode
     {
         private readonly Func<T, bool> _condition;
 
-        internal BtDecoratorNodeIf(Func<T, bool> condition, string name) : base(name)
+        internal BtDecoratorNodeWhile(Func<T, bool> condition, string name) : base(name)
         {
             _condition = condition;
         }
@@ -51,7 +51,7 @@ namespace Edanoue.HybridGraph
 
         internal override bool CanExit()
         {
-            return true;
+            return !_condition.Invoke((T)Blackboard);
         }
     }
 }

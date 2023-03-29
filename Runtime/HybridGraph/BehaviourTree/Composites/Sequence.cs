@@ -5,11 +5,22 @@ namespace Edanoue.HybridGraph
 {
     public static class SequenceExtensions
     {
+        private const string _DEFAULT_NAME = "Sequence";
+
+        /// <summary>
+        /// </summary>
+        /// <param name="self"></param>
+        /// <returns></returns>
         public static ICompositeNode Sequence(this ICompositePort self)
         {
-            return self.Sequence("Sequence");
+            return self.Sequence(_DEFAULT_NAME);
         }
 
+        /// <summary>
+        /// </summary>
+        /// <param name="self"></param>
+        /// <param name="name"></param>
+        /// <returns></returns>
         public static ICompositeNode Sequence(this ICompositePort self, string name)
         {
             var node = new BtCompositeNodeSequence(name);

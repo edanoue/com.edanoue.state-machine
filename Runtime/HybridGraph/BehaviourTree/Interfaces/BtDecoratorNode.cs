@@ -1,8 +1,6 @@
 ﻿// Copyright Edanoue, Inc. All Rights Reserved.
 
 #nullable enable
-using System;
-
 namespace Edanoue.HybridGraph
 {
     public abstract class BtDecoratorNode : BtNode, IDecoratorNode
@@ -11,8 +9,8 @@ namespace Edanoue.HybridGraph
         {
         }
 
-        public IDecoratorPort With => throw new NotImplementedException();
+        internal abstract bool CanEnter();
 
-        internal abstract bool CanExecute();
+        internal abstract bool CanExit();
     }
 }

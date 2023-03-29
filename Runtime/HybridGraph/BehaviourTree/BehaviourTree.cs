@@ -7,9 +7,7 @@ namespace Edanoue.HybridGraph
 {
     public abstract class BehaviourTree<TBlackboard> : IGraphBox
     {
-        private readonly BtRootNode  _rootNode = new();
-        private          IGraphBox?  _parent;
-        protected        TBlackboard Blackboard = default!;
+        private readonly BtRootNode _rootNode = new();
 
         public void Dispose()
         {
@@ -25,8 +23,6 @@ namespace Edanoue.HybridGraph
                 throw new InvalidOperationException("Behaviour tree is already started.");
             }
 
-            Blackboard = (TBlackboard)blackboard ?? throw new ArgumentNullException(nameof(blackboard));
-            _parent = parent;
             ((IGraphItem)_rootNode).Initialize(blackboard, this);
             OnSetupBehaviours(_rootNode);
 
