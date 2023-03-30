@@ -76,17 +76,19 @@ namespace Edanoue.HybridGraph
             return true;
         }
 
-        private bool DoThisDecoratorsAllowExit()
+        private bool DoDecoratorsAllowExit(int childIndex)
         {
-            // No decorators, allow exit
-            if (Decorators.Count == 0)
+            var child = Children[childIndex];
+
+            // No decorators, allow enter
+            if (child.Decorators.Count == 0)
             {
                 return true;
             }
 
-            for (var decoratorIndex = 0; decoratorIndex < Decorators.Count; decoratorIndex++)
+            for (var decoratorIndex = 0; decoratorIndex < child.Decorators.Count; decoratorIndex++)
             {
-                var decorator = Decorators[decoratorIndex];
+                var decorator = child.Decorators[decoratorIndex];
                 if (decorator.CanExit())
                 {
                     continue;
@@ -107,8 +109,6 @@ namespace Edanoue.HybridGraph
 
             while (true)
             {
-                stopWatch.Restart();
-
                 // --- OnNodeActivation ---
                 // ノードに入ってきた時の初期化処理
                 _currentChildIndex = BtSpecialChild.NOT_INITIALIZED;
@@ -119,26 +119,30 @@ namespace Edanoue.HybridGraph
 
                 while (_currentChildIndex != BtSpecialChild.RETURN_TO_PARENT)
                 {
+                    stopWatch.Restart();
                     lastResult = await Children[_currentChildIndex].ExecuteAsync(token);
-                    _currentChildIndex = FindChildToExecute(ref lastResult);
-                }
+                    stopWatch.Stop();
 
-                stopWatch.Stop();
+                    if (DoDecoratorsAllowExit(_currentChildIndex))
+                    {
+                        _currentChildIndex = FindChildToExecute(ref lastResult);
+                    }
+                    else
+                    {
+                        // 無限ループ(によるハング)防止用の Await 処理
+                        // TODO: ここでの最低の待機感覚, Global に設定できるようにするか, Decorator ごとに設定できるようにするべき
+                        var elapsedMilliseconds = stopWatch.ElapsedMilliseconds;
+                        if (elapsedMilliseconds < 100)
+                        {
+                            await UniTask.Delay(TimeSpan.FromMilliseconds(100 - elapsedMilliseconds),
+                                cancellationToken: token);
+                        }
+                    }
+                }
 
                 // --- OnNodeDeactivation ---
                 // 自身の Decorator により Exit が許可されたら親に戻る
-                if (DoThisDecoratorsAllowExit())
-                {
-                    return lastResult;
-                }
-
-                // 無限ループ(によるハング)防止用の Await 処理
-                // TODO: ここでの最低の待機感覚, Global に設定できるようにするか, Decorator ごとに設定できるようにするべき
-                var elapsedMilliseconds = stopWatch.ElapsedMilliseconds;
-                if (elapsedMilliseconds < 100)
-                {
-                    await UniTask.Delay(TimeSpan.FromMilliseconds(100 - elapsedMilliseconds), cancellationToken: token);
-                }
+                return lastResult;
             }
         }
     }

@@ -40,7 +40,7 @@ namespace Edanoue.HybridGraph
 
         public void Dispose()
         {
-            throw new NotImplementedException();
+            // TODO: CancellationToken 周りの処理
         }
 
         IGraphNode IGraphItem.RootNode => RootNode;

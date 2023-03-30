@@ -3,6 +3,7 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 
@@ -43,7 +44,26 @@ namespace Edanoue.HybridGraph
             UniTask.Void(async token =>
             {
                 var childNode = _children[0];
-                var result = await childNode.ExecuteAsync(token);
+                var stopWatch = new Stopwatch();
+                while (true)
+                {
+                    stopWatch.Restart();
+                    var result = await childNode.ExecuteAsync(token);
+                    stopWatch.Stop();
+                    if (DoDecoratorsAllowExit())
+                    {
+                        break;
+                    }
+
+                    // 無限ループ(によるハング)防止用の Await 処理
+                    // TODO: ここでの最低の待機感覚, Global に設定できるようにするか, Decorator ごとに設定できるようにするべき
+                    var elapsedMilliseconds = stopWatch.ElapsedMilliseconds;
+                    if (elapsedMilliseconds < 100)
+                    {
+                        await UniTask.Delay(TimeSpan.FromMilliseconds(100 - elapsedMilliseconds),
+                            cancellationToken: token);
+                    }
+                }
             }, default); // TODO: token
         }
 
@@ -61,6 +81,30 @@ namespace Edanoue.HybridGraph
         }
 
         ICompositePort IRootNode.Add => new RootNodePort(_blackboard, _children);
+
+        private bool DoDecoratorsAllowExit()
+        {
+            var node = _children[0];
+
+            // No decorators, allow enter
+            if (node.Decorators.Count == 0)
+            {
+                return true;
+            }
+
+            for (var decoratorIndex = 0; decoratorIndex < node.Decorators.Count; decoratorIndex++)
+            {
+                var decorator = node.Decorators[decoratorIndex];
+                if (decorator.CanExit())
+                {
+                    continue;
+                }
+
+                return false;
+            }
+
+            return true;
+        }
 
         internal async UniTask<BtNodeResult> ExecuteAsync(CancellationToken token)
         {
