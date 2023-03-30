@@ -37,6 +37,10 @@ namespace Edanoue.HybridGraph.Tests
         public async Task Health10未満のときの挙動の確認()
         {
             // Health 10 未満のときは
+            // 1. MoveToTower を実行 (0.2秒かかる)
+            // 2. 待機 (0.3秒かかる)
+            // 3. Jump を実行
+            // 終了
 
             // Blackboard の作成
             var blackboard = new MockBlackboard
@@ -50,7 +54,7 @@ namespace Edanoue.HybridGraph.Tests
             Assert.That(blackboard.ActionJumpCallCount, Is.EqualTo(0));
 
             // Wait to finish MoveToTower and wait Action
-            await UniTask.Delay(TimeSpan.FromSeconds(0.2f));
+            await UniTask.Delay(TimeSpan.FromSeconds(0.21f));
 
             Assert.That(blackboard.ActionAttackCallCount, Is.EqualTo(0));
             Assert.That(blackboard.ActionMoveToTowerCallCount, Is.EqualTo(1));

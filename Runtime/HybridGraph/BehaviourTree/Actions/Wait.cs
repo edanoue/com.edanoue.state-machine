@@ -21,16 +21,10 @@ namespace Edanoue.HybridGraph
             return self.Wait(timeSpan, _DEFAULT_NAME);
         }
 
-        /// <summary>
-        /// </summary>
-        /// <param name="self"></param>
-        /// <param name="timeSpan"></param>
-        /// <param name="name"></param>
-        /// <returns></returns>
         public static IActionNode Wait(this ICompositePort self, TimeSpan timeSpan, string name)
         {
-            var node = new BtActionNodeWait(timeSpan, name);
-            self.AddNode(node);
+            var node = new BtActionNodeWait(timeSpan);
+            self.AddNode(node, name);
             return node;
         }
     }
@@ -39,7 +33,7 @@ namespace Edanoue.HybridGraph
     {
         private readonly TimeSpan _timeSpan;
 
-        internal BtActionNodeWait(TimeSpan timeSpan, string name) : base(name)
+        internal BtActionNodeWait(TimeSpan timeSpan)
         {
             _timeSpan = timeSpan;
         }

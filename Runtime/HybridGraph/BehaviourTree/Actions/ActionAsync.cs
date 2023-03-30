@@ -33,8 +33,8 @@ namespace Edanoue.HybridGraph
         public static IActionNode ActionAsync<T>(this ICompositePort self,
             Func<T, CancellationToken, UniTask<bool>> asyncAction, string name)
         {
-            var node = new BtActionNodeActionAsync<T>(asyncAction, name);
-            self.AddNode(node);
+            var node = new BtActionNodeActionAsync<T>(asyncAction);
+            self.AddNode(node, name);
             return node;
         }
     }
@@ -43,7 +43,7 @@ namespace Edanoue.HybridGraph
     {
         private readonly Func<T, CancellationToken, UniTask<bool>> _action;
 
-        public BtActionNodeActionAsync(Func<T, CancellationToken, UniTask<bool>> action, string name) : base(name)
+        public BtActionNodeActionAsync(Func<T, CancellationToken, UniTask<bool>> action)
         {
             _action = action;
         }

@@ -14,10 +14,6 @@ namespace Edanoue.HybridGraph
         protected readonly List<BtExecutableNode> Children           = new();
         private            int                    _currentChildIndex = BtSpecialChild.NOT_INITIALIZED;
 
-        internal BtCompositeNode(string name) : base(name)
-        {
-        }
-
         public ICompositePort Add => new BtCompositeNodePort(Blackboard, Children);
         public IDecoratorPort With => new BtDecoratorPort(Blackboard, Decorators);
 

@@ -23,8 +23,8 @@ namespace Edanoue.HybridGraph
         /// <returns></returns>
         public static ICompositeNode Selector(this ICompositePort self, string name)
         {
-            var node = new BtCompositeNodeSelector(name);
-            self.AddNode(node);
+            var node = new BtCompositeNodeSelector();
+            self.AddNode(node, name);
             return node;
         }
     }
@@ -33,10 +33,6 @@ namespace Edanoue.HybridGraph
     /// </summary>
     internal sealed class BtCompositeNodeSelector : BtCompositeNode
     {
-        public BtCompositeNodeSelector(string name) : base(name)
-        {
-        }
-
         protected override int GetNextChildIndex(int prevChild, in BtNodeResult lastResult)
         {
             var nextChild = BtSpecialChild.RETURN_TO_PARENT;

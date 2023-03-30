@@ -72,14 +72,15 @@ namespace Edanoue.HybridGraph
                 _children = children;
             }
 
-            void ICompositePort.AddNode(BtExecutableNode node)
+            void ICompositePort.AddNode(BtExecutableNode node, string nodeName)
             {
                 if (_children.Count > 0)
                 {
                     throw new InvalidOperationException("Root node can only have one child");
                 }
 
-                node.SetBlackboard(_blackboard);
+                node.Blackboard = _blackboard;
+                node.NodeName = nodeName;
                 _children.Add(node);
             }
         }

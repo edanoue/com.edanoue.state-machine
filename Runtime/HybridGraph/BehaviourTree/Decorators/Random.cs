@@ -2,6 +2,7 @@
 
 #nullable enable
 using System;
+using System.Runtime.CompilerServices;
 
 namespace Edanoue.HybridGraph
 {
@@ -11,61 +12,57 @@ namespace Edanoue.HybridGraph
         private const int    _DEFAULT_SEED      = 0;
 
         /// <summary>
+        /// <para>[0, 1] の範囲で指定した確率でノードを実行する Decorator</para>
+        /// <para>0 なら実行されず, 0.5 なら 50%, 1 なら 100% の確率で実行されます.</para>
         /// </summary>
         /// <param name="self"></param>
         /// <param name="probability">[0, 1]</param>
         /// <returns></returns>
-        public static IDecoratorNode Random(this IDecoratorPort self, float probability)
+        public static BtDecoratorNodeRandom Random(this IDecoratorPort self, float probability)
         {
             return self.Random(probability, _DEFAULT_SEED, _DEFAULT_NODE_NAME);
         }
 
-        /// <summary>
-        /// </summary>
-        /// <param name="self"></param>
-        /// <param name="probability">[0, 1]</param>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        public static IDecoratorNode Random(this IDecoratorPort self, float probability, string name)
+        public static BtDecoratorNodeRandom Random(this IDecoratorPort self, float probability, string name)
         {
             return self.Random(probability, _DEFAULT_SEED, name);
         }
 
-        /// <summary>
-        /// </summary>
-        /// <param name="self"></param>
-        /// <param name="probability">[0, 1]</param>
-        /// <param name="seed"></param>
-        /// <returns></returns>
-        public static IDecoratorNode Random(this IDecoratorPort self, float probability, int seed)
+        public static BtDecoratorNodeRandom Random(this IDecoratorPort self, float probability, int seed)
         {
             return self.Random(probability, seed, _DEFAULT_NODE_NAME);
         }
 
-        /// <summary>
-        /// </summary>
-        /// <param name="self"></param>
-        /// <param name="probability">[0, 1]</param>
-        /// <param name="seed"></param>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        public static IDecoratorNode Random(this IDecoratorPort self, float probability, int seed, string name)
+        public static BtDecoratorNodeRandom Random(this IDecoratorPort self, float probability, int seed, string name)
         {
-            var node = new BtDecoratorNodeRandom(probability, seed, name);
-            self.AddDecorator(node);
+            var node = new BtDecoratorNodeRandom(probability, seed);
+            self.AddDecorator(node, name);
             return node;
         }
     }
 
-    internal sealed class BtDecoratorNodeRandom : BtDecoratorNode
+    public sealed class BtDecoratorNodeRandom : BtDecoratorNode
     {
-        private readonly double _probability;
-        private readonly Random _random;
+        private float  _probability;
+        private Random _random;
 
-        public BtDecoratorNodeRandom(float probability, int seed, string name) : base(name)
+        public BtDecoratorNodeRandom(float probability, int seed)
         {
             _random = new Random(seed);
-            _probability = 1.0d - Math.Clamp(probability, 0, 1);
+            Probability = probability;
+        }
+
+        public float Probability
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => 1f - _probability;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            set => _probability = 1.0f - Math.Clamp(value, 0f, 1f);
+        }
+
+        public void UpdateSeed(int seed)
+        {
+            _random = new Random(seed);
         }
 
         internal override bool CanEnter()

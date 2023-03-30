@@ -11,11 +11,6 @@ namespace Edanoue.HybridGraph
     {
         internal readonly List<BtDecoratorNode> Decorators = new();
 
-
-        protected BtExecutableNode(string name) : base(name)
-        {
-        }
-
         /// <summary>
         /// </summary>
         /// <returns></returns>

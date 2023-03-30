@@ -10,6 +10,8 @@ namespace Edanoue.HybridGraph
         private const string _DEFAULT_NAME = "While";
 
         /// <summary>
+        /// <para>指定した condition を満たす場合にノードの実行を繰り返す Decorator</para>
+        /// <para>condition を満たしていない場合は, ノードの実行も行われません (If と同じ挙動です)</para>
         /// </summary>
         /// <param name="self"></param>
         /// <param name="condition"></param>
@@ -20,17 +22,10 @@ namespace Edanoue.HybridGraph
             return self.While(condition, _DEFAULT_NAME);
         }
 
-        /// <summary>
-        /// </summary>
-        /// <param name="self"></param>
-        /// <param name="condition"></param>
-        /// <param name="name"></param>
-        /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
         public static IDecoratorNode While<T>(this IDecoratorPort self, Func<T, bool> condition, string name)
         {
-            var node = new BtDecoratorNodeWhile<T>(condition, name);
-            self.AddDecorator(node);
+            var node = new BtDecoratorNodeWhile<T>(condition);
+            self.AddDecorator(node, name);
             return node;
         }
     }
@@ -39,7 +34,7 @@ namespace Edanoue.HybridGraph
     {
         private readonly Func<T, bool> _condition;
 
-        internal BtDecoratorNodeWhile(Func<T, bool> condition, string name) : base(name)
+        internal BtDecoratorNodeWhile(Func<T, bool> condition)
         {
             _condition = condition;
         }

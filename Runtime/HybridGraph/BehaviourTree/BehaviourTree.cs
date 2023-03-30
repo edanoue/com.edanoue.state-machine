@@ -5,7 +5,14 @@ using System;
 
 namespace Edanoue.HybridGraph
 {
-    public abstract class BehaviourTree<TBlackboard> : IGraphBox
+    public abstract class BehaviourTreeBase : BtExecutableNode, ICompositeNode
+    {
+        public ICompositePort Add => throw new NotImplementedException();
+
+        public IDecoratorPort With => throw new NotImplementedException();
+    }
+
+    public abstract class BehaviourTree<TBlackboard> : BehaviourTreeBase, IGraphBox
     {
         private readonly BtRootNode _rootNode = new();
 
