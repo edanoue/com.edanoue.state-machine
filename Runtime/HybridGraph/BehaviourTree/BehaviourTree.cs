@@ -2,39 +2,53 @@
 
 #nullable enable
 using System;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 
 namespace Edanoue.HybridGraph
 {
-    public abstract class BehaviourTreeBase : BtExecutableNode, ICompositeNode
+    public abstract class BehaviourTreeBase : BtActionNode
     {
-        public ICompositePort Add => throw new NotImplementedException();
+        private protected readonly BtRootNode RootNode = new();
 
-        public IDecoratorPort With => throw new NotImplementedException();
+        internal sealed override async UniTask<BtNodeResult> ExecuteAsync(CancellationToken token)
+        {
+            return await RootNode.ExecuteAsync(token);
+        }
+
+        internal void SetupBehaviours()
+        {
+            ((IGraphItem)RootNode).Initialize(Blackboard, null!);
+            OnSetupBehaviours(RootNode);
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="root"></param>
+        protected abstract void OnSetupBehaviours(IRootNode root);
     }
 
     public abstract class BehaviourTree<TBlackboard> : BehaviourTreeBase, IGraphBox
     {
-        private readonly BtRootNode _rootNode = new();
-
         public void Dispose()
         {
             throw new NotImplementedException();
         }
 
-        IGraphNode IGraphItem.RootNode => _rootNode;
+        IGraphNode IGraphItem.RootNode => RootNode;
 
         void IGraphItem.Initialize(object blackboard, IGraphBox? parent)
         {
-            if (_rootNode.ChildCount != 0)
+            if (RootNode.ChildCount != 0)
             {
                 throw new InvalidOperationException("Behaviour tree is already started.");
             }
 
-            ((IGraphItem)_rootNode).Initialize(blackboard, this);
-            OnSetupBehaviours(_rootNode);
+            ((IGraphItem)RootNode).Initialize(blackboard, this);
+            OnSetupBehaviours(RootNode);
 
             // Setup validation check
-            if (_rootNode.ChildCount != 1)
+            if (RootNode.ChildCount != 1)
             {
                 throw new InvalidOperationException("Root node must have one child.");
             }
@@ -64,10 +78,5 @@ namespace Edanoue.HybridGraph
         {
             throw new NotImplementedException();
         }
-
-        /// <summary>
-        /// </summary>
-        /// <param name="root"></param>
-        protected abstract void OnSetupBehaviours(IRootNode root);
     }
 }

@@ -11,7 +11,7 @@ namespace Edanoue.HybridGraph
         /// </summary>
         /// <param name="self"></param>
         /// <returns></returns>
-        public static ICompositeNode BehaviourTree<T>(this ICompositePort self)
+        public static IActionNode BehaviourTree<T>(this ICompositePort self)
             where T : BehaviourTreeBase, new()
         {
             return self.BehaviourTree<T>(_DEFAULT_NAME);
@@ -22,11 +22,12 @@ namespace Edanoue.HybridGraph
         /// <param name="self"></param>
         /// <param name="name"></param>
         /// <returns></returns>
-        public static ICompositeNode BehaviourTree<T>(this ICompositePort self, string name)
+        public static IActionNode BehaviourTree<T>(this ICompositePort self, string name)
             where T : BehaviourTreeBase, new()
         {
             var node = new T();
             self.AddNode(node, name);
+            node.SetupBehaviours();
             return node;
         }
     }

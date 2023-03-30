@@ -10,7 +10,7 @@ using NUnit.Framework;
 
 namespace Edanoue.HybridGraph.Tests
 {
-    public class TS_BehaviourTree
+    public class TS_BehaviourTreeCOMP
     {
         [Test]
         public void Health10以上のときの挙動の確認()

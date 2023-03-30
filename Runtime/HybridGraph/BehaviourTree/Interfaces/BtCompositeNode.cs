@@ -29,7 +29,7 @@ namespace Edanoue.HybridGraph
         /// </summary>
         /// <param name="lastResult"></param>
         /// <returns></returns>
-        internal override int FindChildToExecute(ref BtNodeResult lastResult)
+        private int FindChildToExecute(ref BtNodeResult lastResult)
         {
             if (Children.Count == 0)
             {

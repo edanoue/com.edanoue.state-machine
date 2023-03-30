@@ -3,6 +3,7 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 
 namespace Edanoue.HybridGraph
@@ -23,7 +24,7 @@ namespace Edanoue.HybridGraph
 
         void IGraphItem.Initialize(object blackboard, IGraphBox? parent)
         {
-            // TODO:
+            // TODO: Parent 無視してます
             _blackboard = blackboard;
         }
 
@@ -60,6 +61,11 @@ namespace Edanoue.HybridGraph
         }
 
         ICompositePort IRootNode.Add => new RootNodePort(_blackboard, _children);
+
+        internal async UniTask<BtNodeResult> ExecuteAsync(CancellationToken token)
+        {
+            return await _children[0].ExecuteAsync(token);
+        }
 
         private sealed class RootNodePort : ICompositePort
         {
