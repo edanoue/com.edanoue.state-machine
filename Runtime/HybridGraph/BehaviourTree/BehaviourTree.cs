@@ -2,6 +2,7 @@
 
 #nullable enable
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 
@@ -30,6 +31,13 @@ namespace Edanoue.HybridGraph
 
     public abstract class BehaviourTree<TBlackboard> : BehaviourTreeBase, IGraphBox
     {
+        /// <summary>
+        /// 内部用のTransition Table
+        /// 遷移先を辞書形式で保存している
+        /// </summary>
+        // ReSharper disable once InconsistentNaming
+        private readonly Dictionary<int, IGraphNode> _transitionTable = new();
+
         public void Dispose()
         {
             throw new NotImplementedException();
@@ -56,27 +64,29 @@ namespace Edanoue.HybridGraph
 
         void IGraphItem.Connect(int trigger, IGraphItem nextNode)
         {
-            throw new NotImplementedException();
+            if (_transitionTable.ContainsKey(trigger))
+            {
+                throw new ArgumentException($"Already registered trigger: {trigger}");
+            }
+
+            _transitionTable.Add(trigger, nextNode.RootNode);
         }
 
         void IGraphItem.OnEnterInternal()
         {
-            throw new NotImplementedException();
         }
 
         void IGraphItem.OnUpdateInternal()
         {
-            throw new NotImplementedException();
         }
 
         void IGraphItem.OnExitInternal(IGraphItem nextNode)
         {
-            throw new NotImplementedException();
         }
 
         bool IGraphBox.IsDescendantNode(IGraphItem node)
         {
-            throw new NotImplementedException();
+            return false;
         }
     }
 }
