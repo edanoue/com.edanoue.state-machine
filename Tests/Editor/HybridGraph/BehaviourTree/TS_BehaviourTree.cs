@@ -77,52 +77,51 @@ namespace Edanoue.HybridGraph.Tests
             protected override void OnSetupBehaviours(IRootNode root)
             {
                 // Selector/
-                //   Attack Action <If: Health > 10>
+                //   Attack Action {If: Health > 10}
                 //   Sequence/ 
                 //     Move to tower (0.2 sec)
                 //     Wait (0.3 sec)
                 //     Jump 
 
-                // セレクタを作成する
-                var selectorA = root.Add.Selector("Selector A");
+                // Root に セレクタをつける
+                var selector = root.Add.Selector("Selector A");
+
+                static async UniTask<bool> AttackAction(MockBlackboard bb, CancellationToken token)
                 {
-                    static async UniTask<bool> AttackAction(MockBlackboard bb, CancellationToken token)
-                    {
-                        // テスト用の BB の更新
-                        bb.ActionAttackCallCount++;
+                    // テスト用の BB の更新
+                    bb.ActionAttackCallCount++;
 
-                        // 1秒かけて敵を攻撃する
-                        await UniTask.Delay(TimeSpan.FromSeconds(1f), cancellationToken: token);
+                    // 1秒かけて敵を攻撃する
+                    await UniTask.Delay(TimeSpan.FromSeconds(1f), cancellationToken: token);
+                    return true;
+                }
+
+                // A. HP が 10 以上の時に 5m 以内の敵を攻撃する Task 
+                selector.Add.ActionAsync<MockBlackboard>(AttackAction, "Attack")
+                    .With.If<MockBlackboard>(x => x.Health > 10f);
+
+                // B. シーケンス
+                var sequence = selector.Add.Sequence();
+                {
+                    // B-1. 一番前のタワーに行く
+                    sequence.Add.ActionAsync<MockBlackboard>(async (bb, token) =>
+                    {
+                        bb.ActionMoveToTowerCallCount++;
+
+                        // 0.2秒 かけてタワーに移動する
+                        await UniTask.Delay(TimeSpan.FromSeconds(0.2f), cancellationToken: token);
                         return true;
-                    }
+                    }, "MoveToTower");
 
-                    // A. HP が 10 以上の時に 5m 以内の敵を攻撃する Task 
-                    selectorA.Add.ActionAsync<MockBlackboard>(AttackAction, "Attack")
-                        .With.If<MockBlackboard>(x => x.Health > 10f);
+                    // B-2. 0.3 秒 待機する (後隙)
+                    sequence.Add.Wait(TimeSpan.FromSeconds(0.2f));
 
-                    // B. シーケンス
-                    var sequence = selectorA.Add.Sequence();
+                    // B-3. ジャンプする
+                    sequence.Add.Action<MockBlackboard>(bb =>
                     {
-                        // B-1. 一番前のタワーに行く
-                        sequence.Add.ActionAsync<MockBlackboard>(async (bb, token) =>
-                        {
-                            bb.ActionMoveToTowerCallCount++;
-
-                            // 0.2秒 かけてタワーに移動する
-                            await UniTask.Delay(TimeSpan.FromSeconds(0.2f), cancellationToken: token);
-                            return true;
-                        }, "MoveToTower");
-
-                        // B-2. 0.3 秒 待機する (後隙)
-                        sequence.Add.Wait(TimeSpan.FromSeconds(0.2f));
-
-                        // B-3. ジャンプする
-                        sequence.Add.Action<MockBlackboard>(bb =>
-                        {
-                            bb.ActionJumpCallCount++;
-                            return true;
-                        });
-                    }
+                        bb.ActionJumpCallCount++;
+                        return true;
+                    });
                 }
             }
         }
