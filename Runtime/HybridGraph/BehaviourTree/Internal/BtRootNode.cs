@@ -11,17 +11,18 @@ namespace Edanoue.HybridGraph
 {
     internal sealed class BtRootNode : IRootNode
     {
-        private readonly List<BtExecutableNode> _children   = new(1);
-        private          object                 _blackboard = null!;
+        private readonly List<BtExecutableNode>   _children   = new(1);
+        private          object                   _blackboard = null!;
+        private          CancellationTokenSource? _runningCts;
 
         public int ChildCount => _children.Count;
-
 
         ICompositePort IRootNode.Add => new RootNodePort(_blackboard, _children);
 
         public void Dispose()
         {
-            throw new NotImplementedException();
+            _runningCts?.Cancel();
+            _runningCts?.Dispose();
         }
 
         internal void SetBlackboard(object blackboard)
@@ -29,12 +30,14 @@ namespace Edanoue.HybridGraph
             _blackboard = blackboard;
         }
 
-        internal void OnEnterInternal()
+        internal void OnEnter()
         {
             if (_children.Count != 1)
             {
                 throw new InvalidOperationException("Root node must have one child");
             }
+
+            _runningCts = new CancellationTokenSource();
 
             UniTask.Void(async token =>
             {
@@ -59,7 +62,14 @@ namespace Edanoue.HybridGraph
                             cancellationToken: token);
                     }
                 }
-            }, default); // TODO: token
+            }, _runningCts.Token);
+        }
+
+        internal void OnExit()
+        {
+            _runningCts?.Cancel();
+            _runningCts?.Dispose();
+            _runningCts = null;
         }
 
         private bool DoDecoratorsAllowExit()

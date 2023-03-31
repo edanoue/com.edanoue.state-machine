@@ -59,7 +59,7 @@ namespace Edanoue.HybridGraph
 
         public void Dispose()
         {
-            // TODO: CancellationToken 周りの処理
+            RootNode.Dispose();
         }
 
         void IGraphItem.Connect(int trigger, IGraphItem nextNode)
@@ -91,7 +91,7 @@ namespace Edanoue.HybridGraph
 
         void IGraphItem.OnEnterInternal()
         {
-            RootNode.OnEnterInternal();
+            RootNode.OnEnter();
         }
 
         void IGraphItem.OnUpdateInternal()
@@ -100,6 +100,7 @@ namespace Edanoue.HybridGraph
 
         void IGraphItem.OnExitInternal(IGraphItem nextNode)
         {
+            RootNode.OnExit();
         }
 
         IGraphNode IGraphItem.GetEntryNode()
