@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 namespace Edanoue.HybridGraph
 {
-    public abstract class StateMachine<TBlackboard> : IGraphBox, IStateBuilder
+    public abstract class StateMachine<TBlackboard> : IGraphBox, IStateBuilder, IGraphEntryNode
     {
         private readonly HashSet<IGraphItem> _children = new();
 
@@ -18,11 +18,19 @@ namespace Edanoue.HybridGraph
         private   IGraphBox?  _parent;
         protected TBlackboard Blackboard = default!;
 
-        void IGraphItem.Initialize(object blackboard, IGraphBox? parent)
+        void IGraphItem.Connect(int trigger, IGraphItem nextNode)
+        {
+            foreach (var child in _children)
+            {
+                child.Connect(trigger, nextNode);
+            }
+        }
+
+        void IGraphItem.OnInitializedInternal(object blackboard, IGraphBox parent)
         {
             if (_initialState is not null)
             {
-                throw new InvalidOperationException("State machine is already started.");
+                throw new InvalidOperationException("StateMachine is already started.");
             }
 
             Blackboard = (TBlackboard)blackboard ?? throw new ArgumentNullException(nameof(blackboard));
@@ -36,14 +44,6 @@ namespace Edanoue.HybridGraph
             }
 
             OnInitialize();
-        }
-
-        void IGraphItem.Connect(int trigger, IGraphItem nextNode)
-        {
-            foreach (var child in _children)
-            {
-                child.Connect(trigger, nextNode);
-            }
         }
 
         void IGraphItem.OnEnterInternal()
@@ -81,12 +81,15 @@ namespace Edanoue.HybridGraph
             _isNotifyOnEnter = false;
         }
 
+        IGraphNode IGraphItem.GetEntryNode()
+        {
+            return _initialState!.GetEntryNode();
+        }
+
         bool IGraphBox.IsDescendantNode(IGraphItem node)
         {
             return IsDescendantNode(node);
         }
-
-        IGraphNode IGraphItem.RootNode => _initialState!.RootNode;
 
         public void Dispose()
         {
@@ -97,6 +100,28 @@ namespace Edanoue.HybridGraph
 
             _children.Clear();
             OnDestroy();
+        }
+
+        IGraphNode IGraphEntryNode.Run(object blackboard)
+        {
+            if (_initialState is not null)
+            {
+                throw new InvalidOperationException("StateMachine is already started.");
+            }
+
+            Blackboard = (TBlackboard)blackboard ?? throw new ArgumentNullException(nameof(blackboard));
+            _parent = null;
+            OnSetupStates(this);
+
+            // Setup validation check
+            if (_initialState is null)
+            {
+                throw new InvalidOperationException("Initial state is not set.");
+            }
+
+            OnInitialize();
+
+            return _initialState.GetEntryNode();
         }
 
         void IStateBuilder.SetInitialState<TState>()
@@ -153,7 +178,7 @@ namespace Edanoue.HybridGraph
             var newState = new TState();
             try
             {
-                newState.Initialize(Blackboard!, this);
+                newState.OnInitializedInternal(Blackboard!, this);
             }
             catch (InvalidCastException)
             {

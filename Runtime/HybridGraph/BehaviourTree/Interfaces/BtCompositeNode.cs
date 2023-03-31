@@ -1,7 +1,9 @@
 ﻿// Copyright Edanoue, Inc. All Rights Reserved.
 
 #nullable enable
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 
@@ -11,10 +13,6 @@ namespace Edanoue.HybridGraph
     {
         protected readonly List<BtExecutableNode> Children           = new();
         private            int                    _currentChildIndex = BtSpecialChild.NOT_INITIALIZED;
-
-        internal BtCompositeNode(string name) : base(name)
-        {
-        }
 
         public ICompositePort Add => new BtCompositeNodePort(Blackboard, Children);
         public IDecoratorPort With => new BtDecoratorPort(Blackboard, Decorators);
@@ -27,7 +25,11 @@ namespace Edanoue.HybridGraph
         /// <returns></returns>
         protected abstract int GetNextChildIndex(int prevChild, in BtNodeResult lastResult);
 
-        internal override int FindChildToExecute(ref BtNodeResult lastResult)
+        /// <summary>
+        /// </summary>
+        /// <param name="lastResult"></param>
+        /// <returns></returns>
+        private int FindChildToExecute(ref BtNodeResult lastResult)
         {
             if (Children.Count == 0)
             {
@@ -38,7 +40,7 @@ namespace Edanoue.HybridGraph
             while (childIndex >= 0 && childIndex < Children.Count)
             {
                 // Check decorators
-                if (DoDecoratorsAllowExecution(childIndex))
+                if (DoDecoratorsAllowEnter(childIndex))
                 {
                     return childIndex;
                 }
@@ -50,10 +52,11 @@ namespace Edanoue.HybridGraph
             return BtSpecialChild.RETURN_TO_PARENT;
         }
 
-        private bool DoDecoratorsAllowExecution(int childIndex)
+        private bool DoDecoratorsAllowEnter(int childIndex)
         {
             var child = Children[childIndex];
 
+            // No decorators, allow enter
             if (child.Decorators.Count == 0)
             {
                 return true;
@@ -62,7 +65,31 @@ namespace Edanoue.HybridGraph
             for (var decoratorIndex = 0; decoratorIndex < child.Decorators.Count; decoratorIndex++)
             {
                 var decorator = child.Decorators[decoratorIndex];
-                if (decorator.CanExecute())
+                if (decorator.CanEnter())
+                {
+                    continue;
+                }
+
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool DoDecoratorsAllowExit(int childIndex)
+        {
+            var child = Children[childIndex];
+
+            // No decorators, allow enter
+            if (child.Decorators.Count == 0)
+            {
+                return true;
+            }
+
+            for (var decoratorIndex = 0; decoratorIndex < child.Decorators.Count; decoratorIndex++)
+            {
+                var decorator = child.Decorators[decoratorIndex];
+                if (decorator.CanExit())
                 {
                     continue;
                 }
@@ -75,16 +102,48 @@ namespace Edanoue.HybridGraph
 
         internal override async UniTask<BtNodeResult> ExecuteAsync(CancellationToken token)
         {
-            var lastResult = BtNodeResult.Failed;
-            _currentChildIndex = FindChildToExecute(ref lastResult);
+            // 無限ループ によるハングを防止する Stopwatch
+            // 以下のシチュエーションで無限ループが発生
+            // 子に Async 系のノードが無いとき かつ このノードに無限ループ系の Decorator が付いているとき
+            var stopWatch = new Stopwatch();
 
-            while (_currentChildIndex != BtSpecialChild.RETURN_TO_PARENT)
+            while (true)
             {
-                lastResult = await Children[_currentChildIndex].ExecuteAsync(token);
-                _currentChildIndex = FindChildToExecute(ref lastResult);
-            }
+                // --- OnNodeActivation ---
+                // ノードに入ってきた時の初期化処理
+                _currentChildIndex = BtSpecialChild.NOT_INITIALIZED;
+                var lastResult = BtNodeResult.Failed;
 
-            return lastResult;
+                // 次に実行する子のノードの Index を取得する
+                _currentChildIndex = FindChildToExecute(ref lastResult);
+
+                while (_currentChildIndex != BtSpecialChild.RETURN_TO_PARENT)
+                {
+                    stopWatch.Restart();
+                    lastResult = await Children[_currentChildIndex].ExecuteAsync(token);
+                    stopWatch.Stop();
+
+                    if (DoDecoratorsAllowExit(_currentChildIndex))
+                    {
+                        _currentChildIndex = FindChildToExecute(ref lastResult);
+                    }
+                    else
+                    {
+                        // 無限ループ(によるハング)防止用の Await 処理
+                        // TODO: ここでの最低の待機感覚, Global に設定できるようにするか, Decorator ごとに設定できるようにするべき
+                        var elapsedMilliseconds = stopWatch.ElapsedMilliseconds;
+                        if (elapsedMilliseconds < 100)
+                        {
+                            await UniTask.Delay(TimeSpan.FromMilliseconds(100 - elapsedMilliseconds),
+                                cancellationToken: token);
+                        }
+                    }
+                }
+
+                // --- OnNodeDeactivation ---
+                // 自身の Decorator により Exit が許可されたら親に戻る
+                return lastResult;
+            }
         }
     }
 }

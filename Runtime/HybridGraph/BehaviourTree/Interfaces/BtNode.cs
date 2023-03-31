@@ -5,17 +5,12 @@ namespace Edanoue.HybridGraph
 {
     public abstract class BtNode
     {
-        private readonly string _name;
-        protected        object Blackboard = null!;
-
-        internal BtNode(string name)
+        internal BtNode()
         {
-            _name = name;
         }
 
-        internal void SetBlackboard(object blackboard)
-        {
-            Blackboard = blackboard;
-        }
+        protected internal object Blackboard { get; internal set; } = null!;
+
+        protected internal string NodeName { get; internal set; } = string.Empty;
     }
 }

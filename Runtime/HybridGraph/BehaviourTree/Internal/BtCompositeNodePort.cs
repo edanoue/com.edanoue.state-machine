@@ -16,9 +16,10 @@ namespace Edanoue.HybridGraph
             _children = children;
         }
 
-        void ICompositePort.AddNode(BtExecutableNode node)
+        void ICompositePort.AddNode(BtExecutableNode node, string nodeName)
         {
-            node.SetBlackboard(_blackboard);
+            node.Blackboard = _blackboard;
+            node.NodeName = nodeName;
             _children.Add(node);
         }
     }

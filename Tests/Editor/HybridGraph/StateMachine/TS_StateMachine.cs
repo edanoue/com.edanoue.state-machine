@@ -6,7 +6,7 @@ using NUnit.Framework;
 
 namespace Edanoue.HybridGraph.Tests
 {
-    public class TS_HibridGraph
+    public class TS_StateMachine
     {
         [Test]
         public void 生成のテスト()

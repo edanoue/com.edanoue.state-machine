@@ -5,15 +5,21 @@ namespace Edanoue.HybridGraph
 {
     public static class SequenceExtensions
     {
+        private const string _DEFAULT_NAME = "Sequence";
+
+        /// <summary>
+        /// </summary>
+        /// <param name="self"></param>
+        /// <returns></returns>
         public static ICompositeNode Sequence(this ICompositePort self)
         {
-            return self.Sequence("Sequence");
+            return self.Sequence(_DEFAULT_NAME);
         }
 
         public static ICompositeNode Sequence(this ICompositePort self, string name)
         {
-            var node = new BtCompositeNodeSequence(name);
-            self.AddNode(node);
+            var node = new BtCompositeNodeSequence();
+            self.AddNode(node, name);
             return node;
         }
     }
@@ -22,10 +28,6 @@ namespace Edanoue.HybridGraph
     /// </summary>
     internal sealed class BtCompositeNodeSequence : BtCompositeNode
     {
-        internal BtCompositeNodeSequence(string name) : base(name)
-        {
-        }
-
         protected override int GetNextChildIndex(int prevChild, in BtNodeResult lastResult)
         {
             var nextChild = BtSpecialChild.RETURN_TO_PARENT;

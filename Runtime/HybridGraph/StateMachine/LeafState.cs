@@ -44,12 +44,6 @@ namespace Edanoue.HybridGraph
             }
         }
 
-        void IGraphItem.Initialize(object blackboard, IGraphBox? parent)
-        {
-            Blackboard = (TBlackboard)blackboard;
-            _parent = parent;
-            OnInitialize();
-        }
 
         void IGraphItem.Connect(int trigger, IGraphItem nextNode)
         {
@@ -58,7 +52,14 @@ namespace Edanoue.HybridGraph
                 throw new ArgumentException($"Already registered trigger: {trigger}");
             }
 
-            _transitionTable.Add(trigger, nextNode.RootNode);
+            _transitionTable.Add(trigger, nextNode.GetEntryNode());
+        }
+
+        void IGraphItem.OnInitializedInternal(object blackboard, IGraphBox parent)
+        {
+            Blackboard = (TBlackboard)blackboard;
+            _parent = parent;
+            OnInitialize();
         }
 
         void IGraphItem.OnEnterInternal()
@@ -84,12 +85,15 @@ namespace Edanoue.HybridGraph
             _parent?.OnExitInternal(nextNode);
         }
 
+        IGraphNode IGraphItem.GetEntryNode()
+        {
+            return this;
+        }
+
         bool IGraphNode.TryGetNextNode(int trigger, out IGraphNode nextNode)
         {
             return _transitionTable.TryGetValue(trigger, out nextNode);
         }
-
-        IGraphNode IGraphItem.RootNode => this;
 
         public void Dispose()
         {

@@ -15,7 +15,6 @@ namespace Edanoue.HybridGraph
 
     public interface IDecoratorNode
     {
-        public IDecoratorPort With { get; }
     }
 
     public interface ICompositeNode
@@ -26,11 +25,11 @@ namespace Edanoue.HybridGraph
 
     public interface ICompositePort
     {
-        internal void AddNode(BtExecutableNode node);
+        internal void AddNode(BtExecutableNode node, string nodeName);
     }
 
     public interface IDecoratorPort
     {
-        internal void AddDecorator(BtDecoratorNode decorator);
+        internal void AddDecorator(BtDecoratorNode decorator, string nodeName);
     }
 }
