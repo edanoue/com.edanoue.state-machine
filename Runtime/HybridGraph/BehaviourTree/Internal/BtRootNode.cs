@@ -9,32 +9,27 @@ using Cysharp.Threading.Tasks;
 
 namespace Edanoue.HybridGraph
 {
-    internal sealed class BtRootNode : IGraphNode, IRootNode
+    internal sealed class BtRootNode : IRootNode
     {
         private readonly List<BtExecutableNode> _children   = new(1);
         private          object                 _blackboard = null!;
 
         public int ChildCount => _children.Count;
 
+
+        ICompositePort IRootNode.Add => new RootNodePort(_blackboard, _children);
+
         public void Dispose()
         {
             throw new NotImplementedException();
         }
 
-        IGraphNode IGraphItem.RootNode => throw new NotImplementedException();
-
-        void IGraphItem.Initialize(object blackboard, IGraphBox? parent)
+        internal void SetBlackboard(object blackboard)
         {
-            // TODO: Parent 無視してます
             _blackboard = blackboard;
         }
 
-        void IGraphItem.Connect(int trigger, IGraphItem nextNode)
-        {
-            throw new NotImplementedException();
-        }
-
-        void IGraphItem.OnEnterInternal()
+        internal void OnEnterInternal()
         {
             if (_children.Count != 1)
             {
@@ -66,21 +61,6 @@ namespace Edanoue.HybridGraph
                 }
             }, default); // TODO: token
         }
-
-        void IGraphItem.OnUpdateInternal()
-        {
-        }
-
-        void IGraphItem.OnExitInternal(IGraphItem nextNode)
-        {
-        }
-
-        bool IGraphNode.TryGetNextNode(int trigger, out IGraphNode nextNode)
-        {
-            throw new NotImplementedException();
-        }
-
-        ICompositePort IRootNode.Add => new RootNodePort(_blackboard, _children);
 
         private bool DoDecoratorsAllowExit()
         {

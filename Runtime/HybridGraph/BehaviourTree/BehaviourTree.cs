@@ -19,7 +19,7 @@ namespace Edanoue.HybridGraph
 
         internal void SetupBehaviours()
         {
-            ((IGraphItem)RootNode).Initialize(Blackboard, null!);
+            RootNode.SetBlackboard(Blackboard);
             OnSetupBehaviours(RootNode);
         }
 
@@ -29,7 +29,7 @@ namespace Edanoue.HybridGraph
         protected abstract void OnSetupBehaviours(IRootNode root);
     }
 
-    public abstract class BehaviourTree<TBlackboard> : BehaviourTreeBase, IGraphBox
+    public abstract class BehaviourTree<TBlackboard> : BehaviourTreeBase, IGraphNode, IGraphEntryNode
     {
         /// <summary>
         /// 内部用のTransition Table
@@ -38,28 +38,28 @@ namespace Edanoue.HybridGraph
         // ReSharper disable once InconsistentNaming
         private readonly Dictionary<int, IGraphNode> _transitionTable = new();
 
-        public void Dispose()
-        {
-            // TODO: CancellationToken 周りの処理
-        }
-
-        IGraphNode IGraphItem.RootNode => RootNode;
-
-        void IGraphItem.Initialize(object blackboard, IGraphBox? parent)
+        IGraphNode IGraphEntryNode.Run(object blackboard)
         {
             if (RootNode.ChildCount != 0)
             {
                 throw new InvalidOperationException("Behaviour tree is already started.");
             }
 
-            ((IGraphItem)RootNode).Initialize(blackboard, this);
-            OnSetupBehaviours(RootNode);
+            Blackboard = blackboard;
+            SetupBehaviours();
 
             // Setup validation check
             if (RootNode.ChildCount != 1)
             {
                 throw new InvalidOperationException("Root node must have one child.");
             }
+
+            return this;
+        }
+
+        public void Dispose()
+        {
+            // TODO: CancellationToken 周りの処理
         }
 
         void IGraphItem.Connect(int trigger, IGraphItem nextNode)
@@ -69,11 +69,29 @@ namespace Edanoue.HybridGraph
                 throw new ArgumentException($"Already registered trigger: {trigger}");
             }
 
-            _transitionTable.Add(trigger, nextNode.RootNode);
+            _transitionTable.Add(trigger, nextNode.GetEntryNode());
+        }
+
+        void IGraphItem.OnInitializedInternal(object blackboard, IGraphBox parent)
+        {
+            if (RootNode.ChildCount != 0)
+            {
+                throw new InvalidOperationException("Behaviour tree is already started.");
+            }
+
+            Blackboard = blackboard;
+            SetupBehaviours();
+
+            // Setup validation check
+            if (RootNode.ChildCount != 1)
+            {
+                throw new InvalidOperationException("Root node must have one child.");
+            }
         }
 
         void IGraphItem.OnEnterInternal()
         {
+            RootNode.OnEnterInternal();
         }
 
         void IGraphItem.OnUpdateInternal()
@@ -84,9 +102,14 @@ namespace Edanoue.HybridGraph
         {
         }
 
-        bool IGraphBox.IsDescendantNode(IGraphItem node)
+        IGraphNode IGraphItem.GetEntryNode()
         {
-            return false;
+            return this;
+        }
+
+        bool IGraphNode.TryGetNextNode(int trigger, out IGraphNode nextNode)
+        {
+            return _transitionTable.TryGetValue(trigger, out nextNode);
         }
     }
 }
