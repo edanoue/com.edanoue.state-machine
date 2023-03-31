@@ -56,7 +56,7 @@ namespace Edanoue.HybridGraph
             _action = action;
         }
 
-        internal override UniTask<BtNodeResult> ExecuteAsync(CancellationToken token)
+        protected override UniTask<BtNodeResult> ExecuteAsync(CancellationToken token)
         {
             return UniTask.FromResult(_action.Invoke() ? BtNodeResult.Succeeded : BtNodeResult.Failed);
         }
@@ -71,7 +71,7 @@ namespace Edanoue.HybridGraph
             _action = action;
         }
 
-        internal override UniTask<BtNodeResult> ExecuteAsync(CancellationToken token)
+        protected override UniTask<BtNodeResult> ExecuteAsync(CancellationToken token)
         {
             return UniTask.FromResult(_action.Invoke((T)Blackboard) ? BtNodeResult.Succeeded : BtNodeResult.Failed);
         }

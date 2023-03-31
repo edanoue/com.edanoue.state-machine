@@ -4,7 +4,7 @@
 
 using NUnit.Framework;
 
-namespace Edanoue.HybridGraph.Tests
+namespace Edanoue.HybridGraph.BehaviourTree.Composites
 {
     public class TS_Selector
     {

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using NUnit.Framework;
 
-namespace Edanoue.HybridGraph.Tests
+namespace Edanoue.HybridGraph.BehaviourTree.Decorators
 {
     public class TS_While
     {

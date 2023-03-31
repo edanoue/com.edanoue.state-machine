@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using NUnit.Framework;
 
-namespace Edanoue.HybridGraph.Tests
+namespace Edanoue.HybridGraph.BehaviourTree.Actions
 {
     public class TS_BehaviourTree
     {
@@ -137,7 +137,8 @@ namespace Edanoue.HybridGraph.Tests
             {
                 var selector = root.Add.Selector();
                 // SubBehaviourTree を追加する
-                selector.Add.BehaviourTree<MockSubBtA>().With.While<MockBlackboard>(bb => bb.Counter < 3);
+                selector.Add.BehaviourTree<MockSubBtA>()
+                    .With.While<MockBlackboard>(bb => bb.Counter < 3);
             }
 
             private class MockSubBtA : BehaviourTree<MockBlackboard>
