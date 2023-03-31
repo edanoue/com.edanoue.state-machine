@@ -24,8 +24,7 @@ namespace Edanoue.HybridGraph
 
         public static IDecoratorNode While<T>(this IDecoratorPort self, Func<T, bool> condition, string name)
         {
-            var node = new BtDecoratorNodeWhile<T>(condition);
-            self.AddDecorator(node, name);
+            var node = new BtDecoratorNodeWhile<T>(self, name, condition);
             return node;
         }
     }
@@ -34,7 +33,7 @@ namespace Edanoue.HybridGraph
     {
         private readonly Func<T, bool> _condition;
 
-        internal BtDecoratorNodeWhile(Func<T, bool> condition)
+        internal BtDecoratorNodeWhile(IDecoratorPort port, string name, Func<T, bool> condition) : base(port, name)
         {
             _condition = condition;
         }

@@ -35,8 +35,7 @@ namespace Edanoue.HybridGraph
 
         public static BtDecoratorNodeRandom Random(this IDecoratorPort self, float probability, int seed, string name)
         {
-            var node = new BtDecoratorNodeRandom(probability, seed);
-            self.AddDecorator(node, name);
+            var node = new BtDecoratorNodeRandom(self, name, probability, seed);
             return node;
         }
     }
@@ -46,7 +45,7 @@ namespace Edanoue.HybridGraph
         private float  _probability;
         private Random _random;
 
-        public BtDecoratorNodeRandom(float probability, int seed)
+        public BtDecoratorNodeRandom(IDecoratorPort port, string name, float probability, int seed) : base(port, name)
         {
             _random = new Random(seed);
             Probability = probability;
@@ -69,11 +68,6 @@ namespace Edanoue.HybridGraph
         {
             var r = _random.NextDouble();
             return r > _probability;
-        }
-
-        internal override bool CanExit()
-        {
-            return true;
         }
     }
 }

@@ -12,7 +12,7 @@ namespace Edanoue.HybridGraph
     {
         private protected readonly BtRootNode RootNode = new();
 
-        internal sealed override async UniTask<BtNodeResult> ExecuteAsync(CancellationToken token)
+        protected sealed override async UniTask<BtNodeResult> ExecuteAsync(CancellationToken token)
         {
             return await RootNode.ExecuteAsync(token);
         }
@@ -37,6 +37,8 @@ namespace Edanoue.HybridGraph
         /// </summary>
         // ReSharper disable once InconsistentNaming
         private readonly Dictionary<int, IGraphNode> _transitionTable = new();
+
+        private IGraphBox? _parent;
 
         IGraphNode IGraphEntryNode.Run(object blackboard)
         {
@@ -79,6 +81,7 @@ namespace Edanoue.HybridGraph
                 throw new InvalidOperationException("Behaviour tree is already started.");
             }
 
+            _parent = parent;
             Blackboard = blackboard;
             SetupBehaviours();
 
@@ -91,6 +94,7 @@ namespace Edanoue.HybridGraph
 
         void IGraphItem.OnEnterInternal()
         {
+            _parent?.OnEnterInternal();
             RootNode.OnEnter();
         }
 
@@ -101,6 +105,7 @@ namespace Edanoue.HybridGraph
         void IGraphItem.OnExitInternal(IGraphItem nextNode)
         {
             RootNode.OnExit();
+            _parent?.OnExitInternal(nextNode);
         }
 
         IGraphNode IGraphItem.GetEntryNode()

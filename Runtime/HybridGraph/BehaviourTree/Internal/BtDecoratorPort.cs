@@ -16,10 +16,10 @@ namespace Edanoue.HybridGraph
             _decorators = decorators;
         }
 
-        void IDecoratorPort.AddDecorator(BtDecoratorNode decorator, string nodeName)
+        object IDecoratorPort.Blackboard => _blackboard;
+
+        void IDecoratorPort.AddDecorator(BtDecoratorNode decorator)
         {
-            decorator.Blackboard = _blackboard;
-            decorator.NodeName = nodeName;
             _decorators.Add(decorator);
         }
     }

@@ -5,8 +5,36 @@ namespace Edanoue.HybridGraph
 {
     public abstract class BtDecoratorNode : BtNode, IDecoratorNode
     {
-        internal abstract bool CanEnter();
+        protected BtDecoratorNode(IDecoratorPort port, string name)
+        {
+            With = port;
+            Blackboard = port.Blackboard;
+            NodeName = name;
+            port.AddDecorator(this);
+        }
 
-        internal abstract bool CanExit();
+        public IDecoratorPort With { get; }
+
+        internal virtual bool CanEnter()
+        {
+            return true;
+        }
+
+        internal virtual bool CanExit()
+        {
+            return true;
+        }
+
+        internal virtual void OnEnter()
+        {
+        }
+
+        internal virtual void OnExecute()
+        {
+        }
+
+        internal virtual void OnExit()
+        {
+        }
     }
 }

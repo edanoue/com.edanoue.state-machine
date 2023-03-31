@@ -38,7 +38,7 @@ namespace Edanoue.HybridGraph
             _timeSpan = timeSpan;
         }
 
-        internal override async UniTask<BtNodeResult> ExecuteAsync(CancellationToken token)
+        protected override async UniTask<BtNodeResult> ExecuteAsync(CancellationToken token)
         {
             await UniTask.Delay(_timeSpan, cancellationToken: token);
             return BtNodeResult.Succeeded;

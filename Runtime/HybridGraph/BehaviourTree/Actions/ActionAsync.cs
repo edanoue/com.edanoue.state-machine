@@ -48,7 +48,7 @@ namespace Edanoue.HybridGraph
             _action = action;
         }
 
-        internal override async UniTask<BtNodeResult> ExecuteAsync(CancellationToken token)
+        protected override async UniTask<BtNodeResult> ExecuteAsync(CancellationToken token)
         {
             var result = await _action.Invoke((T)Blackboard, token);
             return result ? BtNodeResult.Succeeded : BtNodeResult.Failed;

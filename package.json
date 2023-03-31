@@ -1,7 +1,7 @@
 {
   "name": "com.edanoue.state-machine",
   "displayName": "Edanoue State Machine",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "unity": "2021.3",
   "author": {
     "name": "Edanoue, Inc.",

@@ -23,8 +23,7 @@ namespace Edanoue.HybridGraph
 
         public static IDecoratorNode If<T>(this IDecoratorPort self, Func<T, bool> condition, string name)
         {
-            var node = new BtDecoratorNodeIf<T>(condition);
-            self.AddDecorator(node, name);
+            var node = new BtDecoratorNodeIf<T>(self, name, condition);
             return node;
         }
     }
@@ -33,7 +32,7 @@ namespace Edanoue.HybridGraph
     {
         private readonly Func<T, bool> _condition;
 
-        internal BtDecoratorNodeIf(Func<T, bool> condition)
+        internal BtDecoratorNodeIf(IDecoratorPort port, string name, Func<T, bool> condition) : base(port, name)
         {
             _condition = condition;
         }
@@ -41,11 +40,6 @@ namespace Edanoue.HybridGraph
         internal override bool CanEnter()
         {
             return _condition.Invoke((T)Blackboard);
-        }
-
-        internal override bool CanExit()
-        {
-            return true;
         }
     }
 }
