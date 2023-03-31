@@ -7,13 +7,13 @@ namespace Edanoue.HybridGraph
     {
         protected BtDecoratorNode(IDecoratorPort port, string name)
         {
-            And = port;
+            With = port;
             Blackboard = port.Blackboard;
             NodeName = name;
             port.AddDecorator(this);
         }
 
-        public IDecoratorPort And { get; }
+        public IDecoratorPort With { get; }
 
         internal virtual bool CanEnter()
         {
@@ -26,6 +26,10 @@ namespace Edanoue.HybridGraph
         }
 
         internal virtual void OnEnter()
+        {
+        }
+
+        internal virtual void OnExecute()
         {
         }
 

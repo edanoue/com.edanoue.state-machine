@@ -53,7 +53,7 @@ namespace Edanoue.HybridGraph
             return _counter == 0;
         }
 
-        internal override void OnEnter()
+        internal override void OnExecute()
         {
             if (_counter > 0)
             {

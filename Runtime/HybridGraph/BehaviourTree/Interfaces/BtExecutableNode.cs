@@ -12,6 +12,7 @@ namespace Edanoue.HybridGraph
 {
     public abstract class BtExecutableNode : BtNode
     {
+        // (南) Loop 系のノードとすぐ終わる Action の組み合わせで発生するハングを防止するためのタイマー
         private const     int                   _MINIMUM_LOOP_TIME_MS = 100;
         private readonly  Stopwatch             _sw                   = new();
         internal readonly List<BtDecoratorNode> Decorators            = new();
@@ -25,12 +26,18 @@ namespace Edanoue.HybridGraph
             }
 
             // ---------    OnEnter     -----------
+            // Call decorators OnEnter
+            foreach (var decorator in Decorators)
+            {
+                decorator.OnEnter();
+            }
+
             while (true)
             {
-                // OnEnter
+                // Call decorators OnReEnter
                 foreach (var decorator in Decorators)
                 {
-                    decorator.OnEnter();
+                    decorator.OnExecute();
                 }
 
                 _sw.Restart();

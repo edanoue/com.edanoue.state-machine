@@ -9,43 +9,43 @@ using NUnit.Framework;
 
 namespace Edanoue.HybridGraph.BehaviourTree.Decorators
 {
-    public class TS_OnEnter
+    public class TS_OnExit
     {
         [Test]
-        public async Task OnEnterが機能する()
+        public async Task OnExitが機能する()
         {
             var blackboard = new MockBlackboard();
             var graph = EdaGraph.Run<MockBtA>(blackboard);
 
-            Assert.That(blackboard.SelectorOnEnterCount, Is.EqualTo(1));
-            Assert.That(blackboard.ActionOneOnEnterCount, Is.EqualTo(1));
-            Assert.That(blackboard.ActionTwoOnEnterCount, Is.EqualTo(0));
+            Assert.That(blackboard.SelectorOnExitCount, Is.EqualTo(0));
+            Assert.That(blackboard.ActionOneOnExitCount, Is.EqualTo(1));
+            Assert.That(blackboard.ActionTwoOnExitCount, Is.EqualTo(0));
 
             await UniTask.Delay(TimeSpan.FromMilliseconds(100));
 
-            Assert.That(blackboard.SelectorOnEnterCount, Is.EqualTo(1));
-            Assert.That(blackboard.ActionOneOnEnterCount, Is.EqualTo(2));
-            Assert.That(blackboard.ActionTwoOnEnterCount, Is.EqualTo(0));
+            Assert.That(blackboard.SelectorOnExitCount, Is.EqualTo(0));
+            Assert.That(blackboard.ActionOneOnExitCount, Is.EqualTo(2));
+            Assert.That(blackboard.ActionTwoOnExitCount, Is.EqualTo(0));
 
             await UniTask.Delay(TimeSpan.FromMilliseconds(100));
 
-            Assert.That(blackboard.SelectorOnEnterCount, Is.EqualTo(1));
-            Assert.That(blackboard.ActionOneOnEnterCount, Is.EqualTo(2));
-            Assert.That(blackboard.ActionTwoOnEnterCount, Is.EqualTo(1));
+            Assert.That(blackboard.SelectorOnExitCount, Is.EqualTo(0));
+            Assert.That(blackboard.ActionOneOnExitCount, Is.EqualTo(2));
+            Assert.That(blackboard.ActionTwoOnExitCount, Is.EqualTo(1));
 
             await UniTask.Delay(TimeSpan.FromMilliseconds(100));
 
-            Assert.That(blackboard.SelectorOnEnterCount, Is.EqualTo(1));
-            Assert.That(blackboard.ActionOneOnEnterCount, Is.EqualTo(2));
-            Assert.That(blackboard.ActionTwoOnEnterCount, Is.EqualTo(2));
+            Assert.That(blackboard.SelectorOnExitCount, Is.EqualTo(1));
+            Assert.That(blackboard.ActionOneOnExitCount, Is.EqualTo(2));
+            Assert.That(blackboard.ActionTwoOnExitCount, Is.EqualTo(2));
         }
 
         private class MockBlackboard
         {
-            public int ActionOneOnEnterCount;
-            public int ActionTwoOnEnterCount;
+            public int ActionOneOnExitCount;
+            public int ActionTwoOnExitCount;
             public int Counter;
-            public int SelectorOnEnterCount;
+            public int SelectorOnExitCount;
         }
 
         private class MockBtA : BehaviourTree<MockBlackboard>
@@ -61,17 +61,17 @@ namespace Edanoue.HybridGraph.BehaviourTree.Decorators
                 var selector = root.Add.Selector();
                 selector
                     .With.Loop(4)
-                    .With.OnEnter<MockBlackboard>(bb => bb.SelectorOnEnterCount++);
+                    .With.OnExit<MockBlackboard>(bb => bb.SelectorOnExitCount++);
                 {
                     var a1 = selector.Add.Action<MockBlackboard>(CountUpAction);
                     {
                         a1
                             .With.If<MockBlackboard>(bb => bb.Counter < 2)
-                            .With.OnEnter<MockBlackboard>(bb => bb.ActionOneOnEnterCount++);
+                            .With.OnExit<MockBlackboard>(bb => bb.ActionOneOnExitCount++);
                     }
                     var a2 = selector.Add.Action<MockBlackboard>(CountUpAction);
                     {
-                        a2.With.OnEnter<MockBlackboard>(bb => bb.ActionTwoOnEnterCount++);
+                        a2.With.OnExit<MockBlackboard>(bb => bb.ActionTwoOnExitCount++);
                     }
                 }
             }
