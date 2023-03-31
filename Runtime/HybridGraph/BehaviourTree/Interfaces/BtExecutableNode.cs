@@ -17,6 +17,8 @@ namespace Edanoue.HybridGraph
         private readonly  Stopwatch             _sw                   = new();
         internal readonly List<BtDecoratorNode> Decorators            = new();
 
+        internal object Blackboard { get; set; } = null!;
+
         internal async UniTask<BtNodeResult> WrappedExecuteAsync(CancellationToken token)
         {
             // --------- Before OnEnter -----------

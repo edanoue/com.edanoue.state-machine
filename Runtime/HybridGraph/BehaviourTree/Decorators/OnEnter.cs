@@ -57,7 +57,7 @@ namespace Edanoue.HybridGraph
         }
     }
 
-    public sealed class BtDecoratorNodeOnEnter<T> : BtDecoratorNode
+    public sealed class BtDecoratorNodeOnEnter<T> : BtDecoratorNode<T>
     {
         private readonly Action<T> _action;
 
@@ -68,7 +68,7 @@ namespace Edanoue.HybridGraph
 
         internal override void OnEnter()
         {
-            _action.Invoke((T)Blackboard);
+            _action.Invoke(Blackboard);
         }
     }
 }

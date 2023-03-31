@@ -9,11 +9,6 @@ namespace Edanoue.HybridGraph
     public abstract class BtNode
     {
         /// <summary>
-        /// Gets the blackboard.
-        /// </summary>
-        protected internal object Blackboard { get; internal set; } = null!;
-
-        /// <summary>
         /// Gets the name of the node for debugging.
         /// </summary>
         protected internal string NodeName { get; internal set; } = string.Empty;

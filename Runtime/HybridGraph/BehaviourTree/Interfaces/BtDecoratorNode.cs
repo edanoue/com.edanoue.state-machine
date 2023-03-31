@@ -1,6 +1,8 @@
 ﻿// Copyright Edanoue, Inc. All Rights Reserved.
 
 #nullable enable
+using System;
+
 namespace Edanoue.HybridGraph
 {
     public abstract class BtDecoratorNode : BtNode, IDecoratorNode
@@ -8,7 +10,6 @@ namespace Edanoue.HybridGraph
         protected BtDecoratorNode(IDecoratorPort port, string name)
         {
             With = port;
-            Blackboard = port.Blackboard;
             NodeName = name;
             port.AddDecorator(this);
         }
@@ -35,6 +36,23 @@ namespace Edanoue.HybridGraph
 
         internal virtual void OnExit()
         {
+        }
+    }
+
+    public abstract class BtDecoratorNode<T> : BtDecoratorNode
+    {
+        protected readonly T Blackboard;
+
+        protected BtDecoratorNode(IDecoratorPort port, string name) : base(port, name)
+        {
+            try
+            {
+                Blackboard = (T)port.Blackboard;
+            }
+            catch (InvalidCastException e)
+            {
+                throw new InvalidOperationException($"Blackboard が {typeof(T)} を実装していません", e);
+            }
         }
     }
 }

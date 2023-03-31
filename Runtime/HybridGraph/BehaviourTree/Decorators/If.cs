@@ -28,7 +28,7 @@ namespace Edanoue.HybridGraph
         }
     }
 
-    internal sealed class BtDecoratorNodeIf<T> : BtDecoratorNode
+    internal sealed class BtDecoratorNodeIf<T> : BtDecoratorNode<T>
     {
         private readonly Func<T, bool> _condition;
 
@@ -39,7 +39,7 @@ namespace Edanoue.HybridGraph
 
         internal override bool CanEnter()
         {
-            return _condition.Invoke((T)Blackboard);
+            return _condition.Invoke(Blackboard);
         }
     }
 }

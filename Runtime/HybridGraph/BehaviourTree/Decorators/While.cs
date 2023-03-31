@@ -29,7 +29,7 @@ namespace Edanoue.HybridGraph
         }
     }
 
-    internal sealed class BtDecoratorNodeWhile<T> : BtDecoratorNode
+    internal sealed class BtDecoratorNodeWhile<T> : BtDecoratorNode<T>
     {
         private readonly Func<T, bool> _condition;
 
@@ -40,12 +40,12 @@ namespace Edanoue.HybridGraph
 
         internal override bool CanEnter()
         {
-            return _condition.Invoke((T)Blackboard);
+            return _condition.Invoke(Blackboard);
         }
 
         internal override bool CanExit()
         {
-            return !_condition.Invoke((T)Blackboard);
+            return !_condition.Invoke(Blackboard);
         }
     }
 }
