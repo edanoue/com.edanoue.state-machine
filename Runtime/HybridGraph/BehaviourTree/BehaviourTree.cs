@@ -12,6 +12,10 @@ namespace Edanoue.HybridGraph
     {
         private protected readonly BtRootNode RootNode = new();
 
+        internal BehaviourTreeBase() : base(null, "")
+        {
+        }
+
         protected sealed override async UniTask<BtNodeResult> ExecuteAsync(CancellationToken token)
         {
             return await RootNode.ExecuteAsync(token);

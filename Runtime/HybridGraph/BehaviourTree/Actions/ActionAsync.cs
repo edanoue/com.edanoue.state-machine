@@ -33,24 +33,24 @@ namespace Edanoue.HybridGraph
         public static IActionNode ActionAsync<T>(this ICompositePort self,
             Func<T, CancellationToken, UniTask<bool>> asyncAction, string name)
         {
-            var node = new BtActionNodeActionAsync<T>(asyncAction);
-            self.AddNode(node, name);
+            var node = new BtActionNodeActionAsync<T>(self, name, asyncAction);
             return node;
         }
     }
 
-    internal sealed class BtActionNodeActionAsync<T> : BtActionNode
+    internal sealed class BtActionNodeActionAsync<T> : BtActionNode<T>
     {
         private readonly Func<T, CancellationToken, UniTask<bool>> _action;
 
-        public BtActionNodeActionAsync(Func<T, CancellationToken, UniTask<bool>> action)
+        public BtActionNodeActionAsync(ICompositePort port, string name,
+            Func<T, CancellationToken, UniTask<bool>> action) : base(port, name)
         {
             _action = action;
         }
 
         protected override async UniTask<BtNodeResult> ExecuteAsync(CancellationToken token)
         {
-            var result = await _action.Invoke((T)Blackboard, token);
+            var result = await _action.Invoke(Blackboard, token);
             return result ? BtNodeResult.Succeeded : BtNodeResult.Failed;
         }
     }

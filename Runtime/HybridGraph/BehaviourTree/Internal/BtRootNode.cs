@@ -67,7 +67,7 @@ namespace Edanoue.HybridGraph
                 _children = children;
             }
 
-            void ICompositePort.AddNode(BtExecutableNode node, string nodeName)
+            void ICompositePort.AddNode(BtExecutableNode node)
             {
                 if (_children.Count > 0)
                 {
@@ -75,7 +75,6 @@ namespace Edanoue.HybridGraph
                 }
 
                 node.Blackboard = _blackboard;
-                node.NodeName = nodeName;
                 _children.Add(node);
             }
         }

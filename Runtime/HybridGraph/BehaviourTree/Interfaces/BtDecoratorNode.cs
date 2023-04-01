@@ -5,6 +5,9 @@ using System;
 
 namespace Edanoue.HybridGraph
 {
+    /// <summary>
+    /// Decorator の基底クラス. Blackboard にアクセスする必要がある場合は Generics 版を使用してください.
+    /// </summary>
     public abstract class BtDecoratorNode : BtNode, IDecoratorNode
     {
         protected BtDecoratorNode(IDecoratorPort port, string name)
@@ -39,6 +42,10 @@ namespace Edanoue.HybridGraph
         }
     }
 
+    /// <summary>
+    /// Blackboard にアクセスする Decorator の基底クラス
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public abstract class BtDecoratorNode<T> : BtDecoratorNode
     {
         protected readonly T Blackboard;
@@ -49,9 +56,10 @@ namespace Edanoue.HybridGraph
             {
                 Blackboard = (T)port.Blackboard;
             }
-            catch (InvalidCastException e)
+            catch (InvalidCastException)
             {
-                throw new InvalidOperationException($"Blackboard が {typeof(T)} を実装していません", e);
+                throw new InvalidOperationException(
+                    $"{NodeName} Decorator が要求する {typeof(T)} を Blackboard ({port.Blackboard.GetType()}) が実装していません.");
             }
         }
     }

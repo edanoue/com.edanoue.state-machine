@@ -23,8 +23,7 @@ namespace Edanoue.HybridGraph
 
         public static IActionNode Wait(this ICompositePort self, TimeSpan timeSpan, string name)
         {
-            var node = new BtActionNodeWait(timeSpan);
-            self.AddNode(node, name);
+            var node = new BtActionNodeWait(self, name, timeSpan);
             return node;
         }
     }
@@ -33,7 +32,7 @@ namespace Edanoue.HybridGraph
     {
         private readonly TimeSpan _timeSpan;
 
-        internal BtActionNodeWait(TimeSpan timeSpan)
+        internal BtActionNodeWait(ICompositePort port, string name, TimeSpan timeSpan) : base(port, name)
         {
             _timeSpan = timeSpan;
         }

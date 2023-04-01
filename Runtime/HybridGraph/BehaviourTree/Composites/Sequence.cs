@@ -18,8 +18,7 @@ namespace Edanoue.HybridGraph
 
         public static ICompositeNode Sequence(this ICompositePort self, string name)
         {
-            var node = new BtCompositeNodeSequence();
-            self.AddNode(node, name);
+            var node = new BtCompositeNodeSequence(self, name);
             return node;
         }
     }
@@ -28,6 +27,12 @@ namespace Edanoue.HybridGraph
     /// </summary>
     internal sealed class BtCompositeNodeSequence : BtCompositeNode
     {
+        internal BtCompositeNodeSequence(ICompositePort port, string name)
+        {
+            NodeName = name;
+            port.AddNode(this);
+        }
+
         protected override int GetNextChildIndex(int prevChild, in BtNodeResult lastResult)
         {
             var nextChild = BtSpecialChild.RETURN_TO_PARENT;

@@ -23,8 +23,7 @@ namespace Edanoue.HybridGraph
 
         public static IActionNode Action(this ICompositePort self, Func<bool> action, string name)
         {
-            var node = new BtActionNodeAction(action);
-            self.AddNode(node, name);
+            var node = new BtActionNodeAction(self, name, action);
             return node;
         }
 
@@ -41,8 +40,7 @@ namespace Edanoue.HybridGraph
 
         public static IActionNode Action<T>(this ICompositePort self, Func<T, bool> action, string name)
         {
-            var node = new BtActionNodeAction<T>(action);
-            self.AddNode(node, name);
+            var node = new BtActionNodeAction<T>(self, name, action);
             return node;
         }
     }
@@ -51,7 +49,7 @@ namespace Edanoue.HybridGraph
     {
         private readonly Func<bool> _action;
 
-        internal BtActionNodeAction(Func<bool> action)
+        internal BtActionNodeAction(ICompositePort port, string name, Func<bool> action) : base(port, name)
         {
             _action = action;
         }
@@ -62,18 +60,18 @@ namespace Edanoue.HybridGraph
         }
     }
 
-    internal sealed class BtActionNodeAction<T> : BtActionNode
+    internal sealed class BtActionNodeAction<T> : BtActionNode<T>
     {
         private readonly Func<T, bool> _action;
 
-        internal BtActionNodeAction(Func<T, bool> action)
+        internal BtActionNodeAction(ICompositePort port, string name, Func<T, bool> action) : base(port, name)
         {
             _action = action;
         }
 
         protected override UniTask<BtNodeResult> ExecuteAsync(CancellationToken token)
         {
-            return UniTask.FromResult(_action.Invoke((T)Blackboard) ? BtNodeResult.Succeeded : BtNodeResult.Failed);
+            return UniTask.FromResult(_action.Invoke(Blackboard) ? BtNodeResult.Succeeded : BtNodeResult.Failed);
         }
     }
 }
