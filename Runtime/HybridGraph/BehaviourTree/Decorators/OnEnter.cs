@@ -51,7 +51,7 @@ namespace Edanoue.HybridGraph
             _action = action;
         }
 
-        internal override void OnEnter()
+        internal override void OnEnter(BtExecutableNode node)
         {
             _action.Invoke();
         }
@@ -66,7 +66,7 @@ namespace Edanoue.HybridGraph
             _action = action;
         }
 
-        internal override void OnEnter()
+        internal override void OnEnter(BtExecutableNode node)
         {
             _action.Invoke(Blackboard);
         }

@@ -29,7 +29,7 @@ namespace Edanoue.HybridGraph
             return true;
         }
 
-        internal virtual void OnEnter()
+        internal virtual void OnEnter(BtExecutableNode node)
         {
         }
 
@@ -38,6 +38,10 @@ namespace Edanoue.HybridGraph
         }
 
         internal virtual void OnExit()
+        {
+        }
+
+        protected void ForceExecutionFailed()
         {
         }
     }

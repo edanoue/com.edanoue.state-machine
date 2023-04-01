@@ -39,7 +39,7 @@ namespace Edanoue.HybridGraph.Tests
         {
             protected override void OnSetupBehaviours(IRootNode root)
             {
-                var sel = root.Add.Sequence();
+                var sel = root.Add.Selector();
                 sel.Add.Action<BlackboardMockA>(_ => true);
                 // 絶対に評価されない Action を追加する (実行時に呼ばれることがない)
                 // Action が要求する Interface を Blackboard が実装していない
