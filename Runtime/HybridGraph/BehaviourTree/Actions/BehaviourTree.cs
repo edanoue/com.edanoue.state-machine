@@ -25,13 +25,13 @@ namespace Edanoue.HybridGraph
         public static IActionNode BehaviourTree<T>(this ICompositePort self, string name)
             where T : BehaviourTreeBase, new()
         {
-            var node = new T
+            var bt = new T
             {
                 NodeName = name
             };
-            self.AddNode(node);
-            node.SetupBehaviours();
-            return node;
+            self.AddNodeAndSetBlackboard(bt);
+            bt.OnSetupBehaviours(bt);
+            return bt;
         }
     }
 }

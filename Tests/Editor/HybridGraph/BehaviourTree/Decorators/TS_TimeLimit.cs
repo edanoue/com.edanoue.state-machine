@@ -84,7 +84,7 @@ namespace Edanoue.HybridGraph.BehaviourTree.Decorators
                 var seqA = root.Add.Sequence();
                 {
                     var a = seqA.Add.ActionAsync<MockBlackboard>(CountUpAction);
-                    a.With.TimeLimit(TimeSpan.FromSeconds(0.15f), TimeLimitResult.Failed).With.Loop(-1);
+                    a.With.TimeLimit(TimeSpan.FromSeconds(0.15f)).With.Loop(-1);
                 }
             }
         }
@@ -94,7 +94,7 @@ namespace Edanoue.HybridGraph.BehaviourTree.Decorators
             protected override void OnSetupBehaviours(IRootNode root)
             {
                 var seqA = root.Add.Sequence();
-                seqA.With.TimeLimit(TimeSpan.FromMilliseconds(300), TimeLimitResult.Failed);
+                seqA.With.TimeLimit(TimeSpan.FromMilliseconds(300));
                 {
                     // 無限ループする Sequence
                     var seqB = seqA.Add.Sequence();
@@ -114,7 +114,7 @@ namespace Edanoue.HybridGraph.BehaviourTree.Decorators
                 {
                     // TimeLimit により実行に失敗する Action
                     seq.Add.ActionAsync<MockBlackboard>(CountUpAction)
-                        .With.TimeLimit(TimeSpan.FromMilliseconds(50), TimeLimitResult.Failed);
+                        .With.TimeLimit(TimeSpan.FromMilliseconds(50));
                     seq.Add.ActionAsync<MockBlackboard>(CountUpAction);
                 }
             }
@@ -128,7 +128,7 @@ namespace Edanoue.HybridGraph.BehaviourTree.Decorators
                 {
                     // TimeLimit により実行は行われないが, 成功する Action
                     seq.Add.ActionAsync<MockBlackboard>(CountUpAction)
-                        .With.TimeLimit(TimeSpan.FromMilliseconds(50), TimeLimitResult.Succeeded);
+                        .With.TimeLimit(TimeSpan.FromMilliseconds(50), BtNodeResultForce.Succeeded);
                     seq.Add.ActionAsync<MockBlackboard>(CountUpAction);
                 }
             }

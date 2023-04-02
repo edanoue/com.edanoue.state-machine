@@ -16,10 +16,10 @@ namespace Edanoue.HybridGraph
             }
 
             NodeName = name;
-            port.AddNode(this);
+            port.AddNodeAndSetBlackboard(this);
         }
 
-        public IDecoratorPort With => new BtDecoratorPort(Blackboard, Decorators);
+        public IDecoratorPort With => new BtDecoratorPort(BlackboardRaw, Decorators);
     }
 
     /// <summary>
@@ -28,18 +28,18 @@ namespace Edanoue.HybridGraph
     /// <typeparam name="T"></typeparam>
     public abstract class BtActionNode<T> : BtActionNode
     {
-        protected new readonly T Blackboard;
+        protected readonly T Blackboard;
 
         protected BtActionNode(ICompositePort port, string name) : base(port, name)
         {
             try
             {
-                Blackboard = (T)base.Blackboard;
+                Blackboard = (T)BlackboardRaw;
             }
             catch (InvalidCastException)
             {
                 throw new InvalidOperationException(
-                    $"{NodeName} Action が要求する {typeof(T)} を Blackboard ({base.Blackboard.GetType()}) が実装していません.");
+                    $"{NodeName} Action が要求する {typeof(T)} を Blackboard ({BlackboardRaw.GetType()}) が実装していません.");
             }
         }
     }

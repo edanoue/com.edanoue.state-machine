@@ -12,8 +12,8 @@ namespace Edanoue.HybridGraph
         protected readonly List<BtExecutableNode> Children           = new();
         private            int                    _currentChildIndex = BtSpecialChild.NOT_INITIALIZED;
 
-        public ICompositePort Add => new BtCompositePort(Blackboard, Children);
-        public IDecoratorPort With => new BtDecoratorPort(Blackboard, Decorators);
+        public ICompositePort Add => new BtCompositePort(BlackboardRaw, Children);
+        public IDecoratorPort With => new BtDecoratorPort(BlackboardRaw, Decorators);
 
         /// <summary>
         /// Get next child index to process and store it in the context
@@ -27,7 +27,7 @@ namespace Edanoue.HybridGraph
         /// </summary>
         /// <param name="lastResult"></param>
         /// <returns></returns>
-        private int FindChildToExecute(ref BtNodeResult lastResult)
+        private int FindChildToExecute(in BtNodeResult lastResult)
         {
             if (Children.Count == 0)
             {
@@ -75,12 +75,12 @@ namespace Edanoue.HybridGraph
             var lastResult = BtNodeResult.Failed;
 
             // 次に実行する子のノードの Index を取得する
-            _currentChildIndex = FindChildToExecute(ref lastResult);
+            _currentChildIndex = FindChildToExecute(in lastResult);
 
             while (_currentChildIndex != BtSpecialChild.RETURN_TO_PARENT)
             {
                 lastResult = await Children[_currentChildIndex].WrappedExecuteAsync(token);
-                _currentChildIndex = FindChildToExecute(ref lastResult);
+                _currentChildIndex = FindChildToExecute(in lastResult);
             }
 
             // --- OnNodeDeactivation ---

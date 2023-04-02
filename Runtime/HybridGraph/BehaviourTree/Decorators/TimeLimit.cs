@@ -7,12 +7,6 @@ using Cysharp.Threading.Tasks;
 
 namespace Edanoue.HybridGraph
 {
-    public enum TimeLimitResult
-    {
-        Failed,
-        Succeeded
-    }
-
     public static class TimeLimitExtensions
     {
         private const string _DEFAULT_NODE_NAME = "TimeLimit";
@@ -22,16 +16,11 @@ namespace Edanoue.HybridGraph
         /// </summary>
         /// <param name="self"></param>
         /// <param name="timeLimit">時間を指定</param>
-        /// <param name="result">指定した時間が経過した際にノードが返す値</param>
+        /// <param name="result">強制終了時のノードの結果を指定 (Default: Failed)</param>
+        /// <param name="name"></param>
         /// <returns></returns>
         public static BtDecoratorNodeTimeLimit TimeLimit(this IDecoratorPort self, TimeSpan timeLimit,
-            TimeLimitResult result)
-        {
-            return self.TimeLimit(timeLimit, result, _DEFAULT_NODE_NAME);
-        }
-
-        public static BtDecoratorNodeTimeLimit TimeLimit(this IDecoratorPort self, TimeSpan timeLimit,
-            TimeLimitResult result, string name)
+            BtNodeResultForce result = BtNodeResultForce.Failed, string name = _DEFAULT_NODE_NAME)
         {
             var node = new BtDecoratorNodeTimeLimit(self, name, timeLimit, result);
             return node;
@@ -40,11 +29,12 @@ namespace Edanoue.HybridGraph
 
     public sealed class BtDecoratorNodeTimeLimit : BtDecoratorNode
     {
-        private readonly TimeLimitResult          _result;
+        private readonly BtNodeResultForce        _result;
         private readonly TimeSpan                 _timeLimit;
         private          CancellationTokenSource? _timerCts;
 
-        public BtDecoratorNodeTimeLimit(IDecoratorPort port, string name, TimeSpan timeLimit, TimeLimitResult result) :
+        public BtDecoratorNodeTimeLimit(IDecoratorPort port, string name, TimeSpan timeLimit,
+            BtNodeResultForce result) :
             base(port, name)
         {
             _timeLimit = timeLimit;
@@ -59,13 +49,7 @@ namespace Edanoue.HybridGraph
                 await UniTask.Delay(_timeLimit, cancellationToken: token);
                 if (!token.IsCancellationRequested)
                 {
-                    var status = _result switch
-                    {
-                        TimeLimitResult.Failed => BtExecutableNode.BtForceExitStatus.ForceExitFailed,
-                        TimeLimitResult.Succeeded => BtExecutableNode.BtForceExitStatus.ForceExitSucceeded,
-                        _ => throw new ArgumentOutOfRangeException()
-                    };
-                    node.RequestForceExit(status);
+                    node.RequestForceExit(_result);
                 }
             }, _timerCts.Token);
         }

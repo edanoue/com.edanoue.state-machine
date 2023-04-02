@@ -35,7 +35,7 @@ namespace Edanoue.HybridGraph
         internal BtCompositeNodeSelector(ICompositePort port, string name)
         {
             NodeName = name;
-            port.AddNode(this);
+            port.AddNodeAndSetBlackboard(this);
         }
 
         protected override int GetNextChildIndex(int prevChild, in BtNodeResult lastResult)

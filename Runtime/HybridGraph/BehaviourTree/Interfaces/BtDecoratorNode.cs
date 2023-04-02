@@ -40,10 +40,6 @@ namespace Edanoue.HybridGraph
         internal virtual void OnExit()
         {
         }
-
-        protected void ForceExecutionFailed()
-        {
-        }
     }
 
     /// <summary>

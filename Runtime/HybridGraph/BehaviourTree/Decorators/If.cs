@@ -14,14 +14,11 @@ namespace Edanoue.HybridGraph
         /// </summary>
         /// <param name="self"></param>
         /// <param name="condition">bool を返す Func</param>
+        /// <param name="name"></param>
         /// <typeparam name="T">Condition 内で使用する Blackboard の型</typeparam>
         /// <returns></returns>
-        public static IDecoratorNode If<T>(this IDecoratorPort self, Func<T, bool> condition)
-        {
-            return self.If(condition, _DEFAULT_NAME);
-        }
-
-        public static IDecoratorNode If<T>(this IDecoratorPort self, Func<T, bool> condition, string name)
+        public static IDecoratorNode If<T>(this IDecoratorPort self, Func<T, bool> condition,
+            string name = _DEFAULT_NAME)
         {
             var node = new BtDecoratorNodeIf<T>(self, name, condition);
             return node;

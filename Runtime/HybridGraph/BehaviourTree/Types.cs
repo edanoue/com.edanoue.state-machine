@@ -3,7 +3,7 @@
 #nullable enable
 namespace Edanoue.HybridGraph
 {
-    public static class BtSpecialChild
+    internal static class BtSpecialChild
     {
         // Special value for child indices: needs to be initialized
         public const int NOT_INITIALIZED = -1;
@@ -21,9 +21,12 @@ namespace Edanoue.HybridGraph
         Failed,
 
         // Finished as aborting
-        Aborted,
+        Cancelled
+    }
 
-        // Not finished yet
-        InProgress
+    public enum BtNodeResultForce
+    {
+        Failed,
+        Succeeded
     }
 }

@@ -23,7 +23,12 @@ namespace Edanoue.HybridGraph
         // OnExecute のあいだだけ発行されているノードローカルの CTS
         private CancellationTokenSource? _onExecuteCts;
 
-        internal object Blackboard { get; set; } = null!;
+        internal object BlackboardRaw { get; private protected set; } = null!;
+
+        internal virtual void SetBlackboardRaw(object blackboardRaw)
+        {
+            BlackboardRaw = blackboardRaw;
+        }
 
         internal async UniTask<BtNodeResult> WrappedExecuteAsync(CancellationToken token)
         {
@@ -35,11 +40,7 @@ namespace Edanoue.HybridGraph
             }
 
             // ---------    OnEnter     -----------
-            foreach (var decorator in Decorators)
-            {
-                // Call decorators OnEnter
-                decorator.OnEnter(this);
-            }
+            WrappedOnEnter();
 
             // ---------    OnExecute   -----------
             _onExecuteCts = new CancellationTokenSource();
@@ -60,7 +61,7 @@ namespace Edanoue.HybridGraph
                 {
                     if (_forceExitStatus != BtForceExitStatus.None)
                     {
-                        // OnExit (Force)
+                        // Force OnExit with decorator
                         result = _forceExitStatus switch
                         {
                             BtForceExitStatus.ForceExitSucceeded => BtNodeResult.Succeeded,
@@ -68,30 +69,18 @@ namespace Edanoue.HybridGraph
                             _ => throw new ArgumentOutOfRangeException()
                         };
                         _forceExitStatus = BtForceExitStatus.None;
-
-                        _onExecuteCts = null;
-                        foreach (var decorator in Decorators)
-                        {
-                            // Call decorators OnExit
-                            decorator.OnExit();
-                        }
-
+                        // OnExit
+                        WrappedOnExit();
                         return result;
                     }
 
-                    return BtNodeResult.Aborted;
+                    return BtNodeResult.Cancelled;
                 }
 
                 if (DoDecoratorsAllowExit())
                 {
                     // OnExit
-                    _onExecuteCts = null;
-                    foreach (var decorator in Decorators)
-                    {
-                        // Call decorators OnExit
-                        decorator.OnExit();
-                    }
-
+                    WrappedOnExit();
                     return result;
                 }
 
@@ -104,7 +93,28 @@ namespace Edanoue.HybridGraph
             }
         }
 
-        internal void RequestForceExit(BtForceExitStatus result)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void WrappedOnEnter()
+        {
+            foreach (var decorator in Decorators)
+            {
+                // Call decorators OnEnter
+                decorator.OnEnter(this);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void WrappedOnExit()
+        {
+            _onExecuteCts = null;
+            foreach (var decorator in Decorators)
+            {
+                // Call decorators OnExit
+                decorator.OnExit();
+            }
+        }
+
+        internal void RequestForceExit(BtNodeResultForce result)
         {
             if (_onExecuteCts is null) // 実行中の CTS が発行されていない(ので実行中ではない)
             {
@@ -112,7 +122,12 @@ namespace Edanoue.HybridGraph
             }
 
             _onExecuteCts.Cancel();
-            _forceExitStatus = result;
+            _forceExitStatus = result switch
+            {
+                BtNodeResultForce.Failed => BtForceExitStatus.ForceExitFailed,
+                BtNodeResultForce.Succeeded => BtForceExitStatus.ForceExitSucceeded,
+                _ => throw new ArgumentOutOfRangeException(nameof(result), result, null)
+            };
         }
 
         protected abstract UniTask<BtNodeResult> ExecuteAsync(CancellationToken token);
@@ -163,7 +178,8 @@ namespace Edanoue.HybridGraph
             return true;
         }
 
-        internal enum BtForceExitStatus
+
+        private enum BtForceExitStatus
         {
             None,
             ForceExitSucceeded,

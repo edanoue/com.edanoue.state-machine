@@ -5,6 +5,6 @@ namespace Edanoue.HybridGraph
 {
     public interface ICompositePort
     {
-        internal void AddNode(BtExecutableNode node);
+        internal void AddNodeAndSetBlackboard(BtExecutableNode node);
     }
 }

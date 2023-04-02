@@ -10,46 +10,64 @@ namespace Edanoue.HybridGraph
 {
     public abstract class BehaviourTreeBase : BtActionNode, ICompositePort, IRootNode
     {
-        private protected BtExecutableNode? _entryNode;
+        private protected BtExecutableNode? EntryNode;
 
         internal BehaviourTreeBase() : base(null, "")
         {
+            // No OP
         }
 
-        void ICompositePort.AddNode(BtExecutableNode node)
+        void ICompositePort.AddNodeAndSetBlackboard(BtExecutableNode node)
         {
-            if (_entryNode is not null)
+            if (EntryNode is not null)
             {
                 throw new InvalidOperationException("Root node can only have one child");
             }
 
-            node.Blackboard = Blackboard;
-            _entryNode = node;
+            node.SetBlackboardRaw(BlackboardRaw);
+            EntryNode = node;
         }
+
 
         ICompositePort IRootNode.Add => this;
 
         protected sealed override async UniTask<BtNodeResult> ExecuteAsync(CancellationToken token)
         {
-            if (_entryNode is null)
+            // Entry Node が設定されていない場合は Failed を返す
+            if (EntryNode is null)
             {
-                throw new InvalidOperationException("BehaviourTree has not entry node.");
+                return BtNodeResult.Failed;
             }
 
-            return await _entryNode.WrappedExecuteAsync(token);
-        }
+            OnEnter();
 
-        internal void SetupBehaviours()
-        {
-            OnSetupBehaviours(this);
+            return await EntryNode.WrappedExecuteAsync(token);
         }
 
         /// <summary>
         /// </summary>
         /// <param name="root"></param>
-        protected abstract void OnSetupBehaviours(IRootNode root);
+        protected internal abstract void OnSetupBehaviours(IRootNode root);
+
+        /// <summary>
+        /// BehaviourTree に Enter した際に呼ばれるコールバック
+        /// </summary>
+        /// <remarks>
+        /// 以下のタイミングで呼ばれます
+        /// <para>- BehaviourTree を直接 <see cref="EdaGraph.Run" /> した際</para>
+        /// <para>- StateMachine 内部で LeafState として Enter した際</para>
+        /// <para>- BehaviourTree(ActionNode) として Enter した際</para>
+        /// </remarks>
+        protected virtual void OnEnter()
+        {
+        }
     }
 
+    /// <summary>
+    /// HybridGraph で動作する BehaviourTree の基底クラス
+    /// そのまま Run したり, StateMachine の LeafState として取り扱うことができる
+    /// </summary>
+    /// <typeparam name="TBlackboard"></typeparam>
     public abstract class BehaviourTree<TBlackboard> : BehaviourTreeBase, IGraphNode, IGraphEntryNode
     {
         /// <summary>
@@ -59,25 +77,20 @@ namespace Edanoue.HybridGraph
         // ReSharper disable once InconsistentNaming
         private readonly Dictionary<int, IGraphNode> _transitionTable = new();
 
-        private IGraphBox?               _parent;
-        private CancellationTokenSource? _runningCts;
+        private   IGraphBox?               _parent;
+        private   CancellationTokenSource? _runningCts;
+        protected TBlackboard              Blackboard = default!;
 
         // HybridGraph.Run から直接起動された時のエントリーポイント
         IGraphNode IGraphEntryNode.Run(object blackboard)
         {
-            if (_entryNode is not null)
+            if (EntryNode is not null)
             {
                 throw new InvalidOperationException("Behaviour tree is already started.");
             }
 
-            Blackboard = blackboard;
-            SetupBehaviours();
-
-            // Setup validation check
-            if (_entryNode is null)
-            {
-                throw new InvalidOperationException("Root node must have one child.");
-            }
+            SetBlackboardRaw(blackboard);
+            OnSetupBehaviours(this);
 
             return this;
         }
@@ -86,6 +99,8 @@ namespace Edanoue.HybridGraph
         {
             _runningCts?.Cancel();
             _runningCts?.Dispose();
+
+            OnDestroy();
         }
 
         void IGraphItem.Connect(int trigger, IGraphItem nextNode)
@@ -98,38 +113,30 @@ namespace Edanoue.HybridGraph
             _transitionTable.Add(trigger, nextNode.GetEntryNode());
         }
 
+        // StateMachine の中に組み込まれる際に呼ばれるエントリーポイント
         void IGraphItem.OnInitializedInternal(object blackboard, IGraphBox parent)
         {
-            if (_entryNode is not null)
+            if (EntryNode is not null)
             {
                 throw new InvalidOperationException("Behaviour tree is already started.");
             }
 
             _parent = parent;
-            Blackboard = blackboard;
-            SetupBehaviours();
-
-            // Setup validation check
-            if (_entryNode is null)
-            {
-                throw new InvalidOperationException("Root node must have one child.");
-            }
+            SetBlackboardRaw(blackboard);
+            OnSetupBehaviours(this);
         }
 
+        // 直接 Run 及び StateMachine のコンテキストでBTに遷移した際に呼ばれるエントリーポイント
         void IGraphItem.OnEnterInternal()
         {
-            if (_entryNode is null)
-            {
-                throw new InvalidOperationException("Root node must have one child");
-            }
-
             _parent?.OnEnterInternal();
-            OnEnter(); // call inherited callback
 
             _runningCts = new CancellationTokenSource();
+
             UniTask.Void(async token =>
             {
-                var result = await _entryNode.WrappedExecuteAsync(token);
+                var result = await WrappedExecuteAsync(token);
+                OnEndExecute(token.IsCancellationRequested ? BtNodeResult.Cancelled : result);
             }, _runningCts.Token);
         }
 
@@ -140,6 +147,7 @@ namespace Edanoue.HybridGraph
 
         void IGraphItem.OnExitInternal(IGraphItem nextNode)
         {
+            // Cancel Running CTS
             _runningCts?.Cancel();
             _runningCts?.Dispose();
             _runningCts = null;
@@ -158,11 +166,25 @@ namespace Edanoue.HybridGraph
             return _transitionTable.TryGetValue(trigger, out nextNode);
         }
 
-        protected virtual void OnEnter()
+        internal sealed override void SetBlackboardRaw(object blackboardRaw)
+        {
+            base.SetBlackboardRaw(blackboardRaw);
+            Blackboard = (TBlackboard)blackboardRaw;
+        }
+
+        /// <summary>
+        /// </summary>
+        protected virtual void OnExit()
         {
         }
 
-        protected virtual void OnExit()
+        /// <summary>
+        /// </summary>
+        protected virtual void OnDestroy()
+        {
+        }
+
+        protected virtual void OnEndExecute(BtNodeResult result)
         {
         }
     }
