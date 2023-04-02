@@ -8,23 +8,40 @@ using Cysharp.Threading.Tasks;
 
 namespace Edanoue.HybridGraph
 {
-    public abstract class BehaviourTreeBase : BtActionNode
+    public abstract class BehaviourTreeBase : BtActionNode, ICompositePort, IRootNode
     {
-        private protected readonly BtRootNode RootNode = new();
+        private protected BtExecutableNode? _entryNode;
 
         internal BehaviourTreeBase() : base(null, "")
         {
         }
 
+        void ICompositePort.AddNode(BtExecutableNode node)
+        {
+            if (_entryNode is not null)
+            {
+                throw new InvalidOperationException("Root node can only have one child");
+            }
+
+            node.Blackboard = Blackboard;
+            _entryNode = node;
+        }
+
+        ICompositePort IRootNode.Add => this;
+
         protected sealed override async UniTask<BtNodeResult> ExecuteAsync(CancellationToken token)
         {
-            return await RootNode.ExecuteAsync(token);
+            if (_entryNode is null)
+            {
+                throw new InvalidOperationException("BehaviourTree has not entry node.");
+            }
+
+            return await _entryNode.WrappedExecuteAsync(token);
         }
 
         internal void SetupBehaviours()
         {
-            RootNode.SetBlackboard(Blackboard);
-            OnSetupBehaviours(RootNode);
+            OnSetupBehaviours(this);
         }
 
         /// <summary>
@@ -42,11 +59,13 @@ namespace Edanoue.HybridGraph
         // ReSharper disable once InconsistentNaming
         private readonly Dictionary<int, IGraphNode> _transitionTable = new();
 
-        private IGraphBox? _parent;
+        private IGraphBox?               _parent;
+        private CancellationTokenSource? _runningCts;
 
+        // HybridGraph.Run から直接起動された時のエントリーポイント
         IGraphNode IGraphEntryNode.Run(object blackboard)
         {
-            if (RootNode.ChildCount != 0)
+            if (_entryNode is not null)
             {
                 throw new InvalidOperationException("Behaviour tree is already started.");
             }
@@ -55,7 +74,7 @@ namespace Edanoue.HybridGraph
             SetupBehaviours();
 
             // Setup validation check
-            if (RootNode.ChildCount != 1)
+            if (_entryNode is null)
             {
                 throw new InvalidOperationException("Root node must have one child.");
             }
@@ -65,7 +84,8 @@ namespace Edanoue.HybridGraph
 
         public void Dispose()
         {
-            RootNode.Dispose();
+            _runningCts?.Cancel();
+            _runningCts?.Dispose();
         }
 
         void IGraphItem.Connect(int trigger, IGraphItem nextNode)
@@ -80,7 +100,7 @@ namespace Edanoue.HybridGraph
 
         void IGraphItem.OnInitializedInternal(object blackboard, IGraphBox parent)
         {
-            if (RootNode.ChildCount != 0)
+            if (_entryNode is not null)
             {
                 throw new InvalidOperationException("Behaviour tree is already started.");
             }
@@ -90,7 +110,7 @@ namespace Edanoue.HybridGraph
             SetupBehaviours();
 
             // Setup validation check
-            if (RootNode.ChildCount != 1)
+            if (_entryNode is null)
             {
                 throw new InvalidOperationException("Root node must have one child.");
             }
@@ -98,17 +118,33 @@ namespace Edanoue.HybridGraph
 
         void IGraphItem.OnEnterInternal()
         {
+            if (_entryNode is null)
+            {
+                throw new InvalidOperationException("Root node must have one child");
+            }
+
             _parent?.OnEnterInternal();
-            RootNode.OnEnter();
+            OnEnter(); // call inherited callback
+
+            _runningCts = new CancellationTokenSource();
+            UniTask.Void(async token =>
+            {
+                var result = await _entryNode.WrappedExecuteAsync(token);
+            }, _runningCts.Token);
         }
 
         void IGraphItem.OnUpdateInternal()
         {
+            // No OP
         }
 
         void IGraphItem.OnExitInternal(IGraphItem nextNode)
         {
-            RootNode.OnExit();
+            _runningCts?.Cancel();
+            _runningCts?.Dispose();
+            _runningCts = null;
+
+            OnExit(); // call inherited callback
             _parent?.OnExitInternal(nextNode);
         }
 
@@ -120,6 +156,14 @@ namespace Edanoue.HybridGraph
         bool IGraphNode.TryGetNextNode(int trigger, out IGraphNode nextNode)
         {
             return _transitionTable.TryGetValue(trigger, out nextNode);
+        }
+
+        protected virtual void OnEnter()
+        {
+        }
+
+        protected virtual void OnExit()
+        {
         }
     }
 }
