@@ -33,10 +33,15 @@ namespace Edanoue.HybridGraph
         internal async UniTask<BtNodeResult> WrappedExecuteAsync(CancellationToken token)
         {
             // --------- Before OnEnter -----------
-            if (!DoDecoratorsAllowEnter())
+            if (!DoDecoratorsAllowEnter(out var abortResult))
             {
                 // If any decorator returns false, execution failed
-                return BtNodeResult.Failed;
+                return abortResult switch
+                {
+                    BtNodeResultForce.Failed => BtNodeResult.Failed,
+                    BtNodeResultForce.Succeeded => BtNodeResult.Succeeded,
+                    _ => throw new ArgumentOutOfRangeException()
+                };
             }
 
             // ---------    OnEnter     -----------
@@ -133,9 +138,11 @@ namespace Edanoue.HybridGraph
         protected abstract UniTask<BtNodeResult> ExecuteAsync(CancellationToken token);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool DoDecoratorsAllowEnter()
+        private bool DoDecoratorsAllowEnter(out BtNodeResultForce abortResult)
         {
             var decoratorCount = Decorators.Count;
+            abortResult = BtNodeResultForce.Failed;
+
             if (decoratorCount == 0)
             {
                 return true;
@@ -149,6 +156,7 @@ namespace Edanoue.HybridGraph
                     continue;
                 }
 
+                abortResult = decorator.GetAbortResult();
                 return false;
             }
 

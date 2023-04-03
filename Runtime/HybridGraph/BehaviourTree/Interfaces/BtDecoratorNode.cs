@@ -40,6 +40,11 @@ namespace Edanoue.HybridGraph
         internal virtual void OnExit()
         {
         }
+
+        internal virtual BtNodeResultForce GetAbortResult()
+        {
+            return BtNodeResultForce.Failed;
+        }
     }
 
     /// <summary>

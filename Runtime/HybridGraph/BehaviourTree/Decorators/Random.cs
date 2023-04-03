@@ -17,38 +17,34 @@ namespace Edanoue.HybridGraph
         /// </summary>
         /// <param name="self"></param>
         /// <param name="probability">[0, 1]</param>
+        /// <param name="abortResult"></param>
+        /// <param name="seed"></param>
+        /// <param name="name"></param>
         /// <returns></returns>
-        public static BtDecoratorNodeRandom Random(this IDecoratorPort self, float probability)
+        public static BtDecoratorNodeRandom Random(
+            this IDecoratorPort self,
+            float probability,
+            BtNodeResultForce abortResult = BtNodeResultForce.Failed,
+            int seed = _DEFAULT_SEED,
+            string name = _DEFAULT_NODE_NAME)
         {
-            return self.Random(probability, _DEFAULT_SEED, _DEFAULT_NODE_NAME);
-        }
-
-        public static BtDecoratorNodeRandom Random(this IDecoratorPort self, float probability, string name)
-        {
-            return self.Random(probability, _DEFAULT_SEED, name);
-        }
-
-        public static BtDecoratorNodeRandom Random(this IDecoratorPort self, float probability, int seed)
-        {
-            return self.Random(probability, seed, _DEFAULT_NODE_NAME);
-        }
-
-        public static BtDecoratorNodeRandom Random(this IDecoratorPort self, float probability, int seed, string name)
-        {
-            var node = new BtDecoratorNodeRandom(self, name, probability, seed);
+            var node = new BtDecoratorNodeRandom(self, name, probability, seed, abortResult);
             return node;
         }
     }
 
     public sealed class BtDecoratorNodeRandom : BtDecoratorNode
     {
-        private float  _probability;
-        private Random _random;
+        private readonly BtNodeResultForce _abortResult;
+        private          float             _probability;
+        private          Random            _random;
 
-        public BtDecoratorNodeRandom(IDecoratorPort port, string name, float probability, int seed) : base(port, name)
+        public BtDecoratorNodeRandom(IDecoratorPort port, string name, float probability, int seed,
+            BtNodeResultForce abortResult) : base(port, name)
         {
             _random = new Random(seed);
             Probability = probability;
+            _abortResult = abortResult;
         }
 
         public float Probability
@@ -68,6 +64,11 @@ namespace Edanoue.HybridGraph
         {
             var r = _random.NextDouble();
             return r > _probability;
+        }
+
+        internal override BtNodeResultForce GetAbortResult()
+        {
+            return _abortResult;
         }
     }
 }
