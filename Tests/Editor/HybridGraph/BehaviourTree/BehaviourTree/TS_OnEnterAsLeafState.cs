@@ -12,19 +12,25 @@ using NUnit.Framework;
 
 namespace Edanoue.HybridGraph.BehaviourTree.BehaviourTree
 {
-    public class TS_OnEnter
+    public class TS_OnEnterAsLeafState
     {
         [Test]
-        public void 直接Runした時の挙動()
+        public async Task 直接Runした時の挙動()
         {
+            // Graph として (直接 Run) 動作した時の挙動
+            // OnEnterAsLeafState が一度だけ呼ばれる (Behaviour の動作は一切影響を及ぼさない)
             var bb = new MockBlackboard();
             EdaGraph.Run<MockBehaviourTreeA>(bb);
+            Assert.That(bb.OnEnterCounter, Is.EqualTo(1));
+            await UniTask.Delay(TimeSpan.FromMilliseconds(101));
             Assert.That(bb.OnEnterCounter, Is.EqualTo(1));
         }
 
         [Test]
         public void BtInSmの時の挙動_InitialState()
         {
+            // LeafState として SM に Initial State として設定されたときの動作
+            // OnEnterAsLeafState が一度だけ呼ばれる
             var bb = new MockBlackboard();
             EdaGraph.Run<MockStateMachineA>(bb);
             Assert.That(bb.OnEnterCounter, Is.EqualTo(1));
@@ -33,6 +39,8 @@ namespace Edanoue.HybridGraph.BehaviourTree.BehaviourTree
         [Test]
         public void BtInSmの時の挙動_遷移()
         {
+            // LeafState として SM に 設定されたときの動作
+            // 遷移時に OnEnterAsLeafState が呼ばれる
             var bb = new MockBlackboard();
             var graph = EdaGraph.Run<MockStateMachineB>(bb);
             Assert.That(bb.OnEnterCounter, Is.EqualTo(0));
@@ -53,24 +61,18 @@ namespace Edanoue.HybridGraph.BehaviourTree.BehaviourTree
         [Test]
         public async Task BtInBtの時の挙動()
         {
+            // BehaviourTree in BehaviourTree として設定された時の動作
+            // この場合, コンテキストは BT のため実行されることはない
             var bb = new MockBlackboard();
             EdaGraph.Run<MockBehaviourTreeB>(bb);
-            Assert.That(bb.OnEnterCounter, Is.EqualTo(1));
+            Assert.That(bb.OnEnterCounter, Is.EqualTo(0));
             await UniTask.Delay(TimeSpan.FromMilliseconds(101));
-            Assert.That(bb.OnEnterCounter, Is.EqualTo(2));
+            Assert.That(bb.OnEnterCounter, Is.EqualTo(0));
             await UniTask.Delay(TimeSpan.FromMilliseconds(101));
-            Assert.That(bb.OnEnterCounter, Is.EqualTo(2));
+            Assert.That(bb.OnEnterCounter, Is.EqualTo(0));
         }
 
-        [Test]
-        public void BtInBtの時のDecoratorのOnEnterと併用したときの挙動()
-        {
-            var bb = new MockBlackboard();
-            EdaGraph.Run<MockBehaviourTreeC>(bb);
-            Assert.That(bb.OnEnterCounter, Is.EqualTo(2));
-        }
-
-        private static bool NoOpAction(MockBlackboard bb)
+        private static bool NoOpAction()
         {
             return true;
         }
@@ -86,12 +88,11 @@ namespace Edanoue.HybridGraph.BehaviourTree.BehaviourTree
             {
                 var seq = root.Add.Sequence();
                 {
-                    seq.Add.Action<MockBlackboard>(NoOpAction);
-                    seq.Add.Action<MockBlackboard>(NoOpAction);
+                    seq.Add.Action(NoOpAction).With.Loop(2);
                 }
             }
 
-            protected override void OnEnter()
+            protected override void OnEnterAsLeafState()
             {
                 Blackboard.OnEnterCounter++;
             }
@@ -111,44 +112,12 @@ namespace Edanoue.HybridGraph.BehaviourTree.BehaviourTree
             {
                 protected override void OnSetupBehaviours(IRootNode root)
                 {
-                    var seq = root.Add.Sequence();
-                    seq.Add.Action<MockBlackboard>(NoOpAction);
+                    root.Add.Sequence().Add.Action(NoOpAction);
                 }
 
-                protected override void OnEnter()
+                protected override void OnEnterAsLeafState()
                 {
                     Blackboard.OnEnterCounter++;
-                }
-            }
-        }
-
-        private sealed class MockBehaviourTreeC : BehaviourTree<MockBlackboard>
-        {
-            protected override void OnSetupBehaviours(IRootNode root)
-            {
-                var seq = root.Add.Sequence();
-                {
-                    // OnEnter Decorator をつける
-                    seq.Add.BehaviourTree<SubBehaviourTree>()
-                        .With.OnEnter<MockBlackboard>(bb => bb.OnEnterCounter++);
-                }
-            }
-
-            private class SubBehaviourTree : BehaviourTree<MockBlackboard>
-            {
-                protected override void OnSetupBehaviours(IRootNode root)
-                {
-                    var seq = root.Add.Sequence();
-                    seq.Add.Action<MockBlackboard>(NoOpAction);
-                }
-
-                protected override void OnEnter()
-                {
-                    // 先に Decorator 側の OnEnter が呼ばれていることを確認する
-                    if (Blackboard.OnEnterCounter == 1)
-                    {
-                        Blackboard.OnEnterCounter++;
-                    }
                 }
             }
         }

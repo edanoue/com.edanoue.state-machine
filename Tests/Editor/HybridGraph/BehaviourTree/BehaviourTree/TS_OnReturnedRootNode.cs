@@ -12,7 +12,7 @@ using NUnit.Framework;
 
 namespace Edanoue.HybridGraph.BehaviourTree.BehaviourTree
 {
-    public class TS_OnEndExecute
+    public class TS_OnReturnedRootNode
     {
         [Test]
         public void RootにSucceededで戻ってくるBTをRunする()
@@ -37,7 +37,7 @@ namespace Edanoue.HybridGraph.BehaviourTree.BehaviourTree
         }
 
         [Test]
-        public async Task LoopするBtをRunする()
+        public async Task LoopするBtをDisposeする()
         {
             // 内部で Loop する BTの 実行
             var bb = new MockBlackboard();
@@ -47,6 +47,23 @@ namespace Edanoue.HybridGraph.BehaviourTree.BehaviourTree
 
             // Graph を Dispose すると Cancelled が帰ってくる
             graph.Dispose();
+            await UniTask.Delay(TimeSpan.FromMilliseconds(1)); // 次のフレームで呼ばれる
+            Assert.That(bb.OnEndExecuteCounter, Is.EqualTo(1));
+            Assert.That(bb.OnEndExecuteResult, Is.EqualTo(BtNodeResult.Cancelled));
+        }
+
+        [Test]
+        public async Task Sm内部にあるLoopするBtを遷移させる()
+        {
+            // 内部で Loop する BTの 実行
+            var bb = new MockBlackboard();
+            var graph = EdaGraph.Run<MockStateMachineA>(bb);
+            // 実行直後は Loop しているので結果が返ってこない
+            Assert.That(bb.OnEndExecuteCounter, Is.EqualTo(0));
+
+            // State を遷移させると Cancelled が帰ってくる
+            graph.SendTrigger(0);
+            graph.Update();
             await UniTask.Delay(TimeSpan.FromMilliseconds(1)); // 次のフレームで呼ばれる
             Assert.That(bb.OnEndExecuteCounter, Is.EqualTo(1));
             Assert.That(bb.OnEndExecuteResult, Is.EqualTo(BtNodeResult.Cancelled));
@@ -78,7 +95,7 @@ namespace Edanoue.HybridGraph.BehaviourTree.BehaviourTree
                 }
             }
 
-            protected override void OnEndExecute(BtNodeResult result)
+            protected override void OnReturnedRootNode(BtNodeResult result)
             {
                 Blackboard.OnEndExecuteCounter++;
                 Blackboard.OnEndExecuteResult = result;
@@ -95,7 +112,7 @@ namespace Edanoue.HybridGraph.BehaviourTree.BehaviourTree
                 }
             }
 
-            protected override void OnEndExecute(BtNodeResult result)
+            protected override void OnReturnedRootNode(BtNodeResult result)
             {
                 Blackboard.OnEndExecuteCounter++;
                 Blackboard.OnEndExecuteResult = result;
@@ -113,10 +130,23 @@ namespace Edanoue.HybridGraph.BehaviourTree.BehaviourTree
                 }
             }
 
-            protected override void OnEndExecute(BtNodeResult result)
+            protected override void OnReturnedRootNode(BtNodeResult result)
             {
                 Blackboard.OnEndExecuteCounter++;
                 Blackboard.OnEndExecuteResult = result;
+            }
+        }
+
+        private sealed class MockStateMachineA : StateMachine<MockBlackboard>
+        {
+            protected override void OnSetupStates(IStateBuilder builder)
+            {
+                builder.AddTransition<MockBehaviourTreeC, IdleState>(0);
+                builder.SetInitialState<MockBehaviourTreeC>();
+            }
+
+            private sealed class IdleState : LeafState<MockBlackboard>
+            {
             }
         }
     }

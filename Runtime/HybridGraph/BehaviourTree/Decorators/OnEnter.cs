@@ -29,13 +29,10 @@ namespace Edanoue.HybridGraph
         /// </summary>
         /// <param name="self"></param>
         /// <param name="action"></param>
+        /// <param name="name"></param>
         /// <returns></returns>
-        public static BtDecoratorNodeOnEnter OnEnter(this IDecoratorPort self, Action action)
-        {
-            return self.OnEnter(action, _DEFAULT_NODE_NAME);
-        }
-
-        public static BtDecoratorNodeOnEnter OnEnter(this IDecoratorPort self, Action action, string name)
+        public static BtDecoratorNodeOnEnter OnEnter(this IDecoratorPort self, Action action,
+            string name = _DEFAULT_NODE_NAME)
         {
             var node = new BtDecoratorNodeOnEnter(self, name, action);
             return node;

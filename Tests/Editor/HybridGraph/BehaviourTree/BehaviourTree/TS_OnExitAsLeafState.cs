@@ -2,11 +2,17 @@
 
 #nullable enable
 
+using System;
+using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using NUnit.Framework;
+
+// ReSharper disable CheckNamespace
+// ReSharper disable InconsistentNaming
 
 namespace Edanoue.HybridGraph.BehaviourTree.BehaviourTree
 {
-    public class TS_OnExit
+    public class TS_OnExitAsLeafState
     {
         [Test]
         public void 直接Runした時の挙動()
@@ -18,7 +24,7 @@ namespace Edanoue.HybridGraph.BehaviourTree.BehaviourTree
         }
 
         [Test]
-        public void StateMachineに組み込んだ時の挙動_InitialState()
+        public void BtInSmの時の挙動_InitialState()
         {
             var bb = new MockBlackboard();
             EdaGraph.Run<MockStateMachineA>(bb);
@@ -27,7 +33,7 @@ namespace Edanoue.HybridGraph.BehaviourTree.BehaviourTree
         }
 
         [Test]
-        public void StateMachineに組み込んだ時の挙動_遷移()
+        public void BtInSmの時の挙動_遷移()
         {
             var bb = new MockBlackboard();
             var graph = EdaGraph.Run<MockStateMachineB>(bb);
@@ -52,7 +58,21 @@ namespace Edanoue.HybridGraph.BehaviourTree.BehaviourTree
             Assert.That(bb.OnExitCounter, Is.EqualTo(2));
         }
 
-        private static bool NoOpAction(MockBlackboard bb)
+        [Test]
+        public async Task BtInBtの時の挙動()
+        {
+            // BehaviourTree in BehaviourTree として設定された時の動作
+            // この場合, コンテキストは BT のため実行されることはない
+            var bb = new MockBlackboard();
+            EdaGraph.Run<MockBehaviourTreeB>(bb);
+            Assert.That(bb.OnExitCounter, Is.EqualTo(0));
+            await UniTask.Delay(TimeSpan.FromMilliseconds(101));
+            Assert.That(bb.OnExitCounter, Is.EqualTo(0));
+            await UniTask.Delay(TimeSpan.FromMilliseconds(101));
+            Assert.That(bb.OnExitCounter, Is.EqualTo(0));
+        }
+
+        private static bool NoOpAction()
         {
             return true;
         }
@@ -68,16 +88,41 @@ namespace Edanoue.HybridGraph.BehaviourTree.BehaviourTree
             {
                 var seq = root.Add.Sequence();
                 {
-                    seq.Add.Action<MockBlackboard>(NoOpAction);
-                    seq.Add.Action<MockBlackboard>(NoOpAction);
+                    seq.Add.Action(NoOpAction);
+                    seq.Add.Action(NoOpAction);
                 }
             }
 
-            protected override void OnExit()
+            protected override void OnExitAsLeafState()
             {
                 Blackboard.OnExitCounter++;
             }
         }
+
+        private sealed class MockBehaviourTreeB : BehaviourTree<MockBlackboard>
+        {
+            protected override void OnSetupBehaviours(IRootNode root)
+            {
+                var seq = root.Add.Sequence();
+                {
+                    seq.Add.BehaviourTree<SubBehaviourTree>().With.Loop(2);
+                }
+            }
+
+            private sealed class SubBehaviourTree : BehaviourTree<MockBlackboard>
+            {
+                protected override void OnSetupBehaviours(IRootNode root)
+                {
+                    root.Add.Sequence().Add.Action(NoOpAction);
+                }
+
+                protected override void OnExitAsLeafState()
+                {
+                    Blackboard.OnExitCounter++;
+                }
+            }
+        }
+
 
         private sealed class MockStateMachineA : StateMachine<MockBlackboard>
         {

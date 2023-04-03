@@ -33,7 +33,7 @@ namespace Edanoue.HybridGraph
         {
         }
 
-        internal virtual void OnExecute()
+        internal virtual void OnPreExecute()
         {
         }
 

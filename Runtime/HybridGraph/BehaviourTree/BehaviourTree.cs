@@ -28,7 +28,6 @@ namespace Edanoue.HybridGraph
             EntryNode = node;
         }
 
-
         ICompositePort IRootNode.Add => this;
 
         protected sealed override async UniTask<BtNodeResult> ExecuteAsync(CancellationToken token)
@@ -39,8 +38,6 @@ namespace Edanoue.HybridGraph
                 return BtNodeResult.Failed;
             }
 
-            OnEnter();
-
             return await EntryNode.WrappedExecuteAsync(token);
         }
 
@@ -48,19 +45,6 @@ namespace Edanoue.HybridGraph
         /// </summary>
         /// <param name="root"></param>
         protected internal abstract void OnSetupBehaviours(IRootNode root);
-
-        /// <summary>
-        /// BehaviourTree に Enter した際に呼ばれるコールバック
-        /// </summary>
-        /// <remarks>
-        /// 以下のタイミングで呼ばれます
-        /// <para>- BehaviourTree を直接 <see cref="EdaGraph.Run" /> した際</para>
-        /// <para>- StateMachine 内部で LeafState として Enter した際</para>
-        /// <para>- BehaviourTree(ActionNode) として Enter した際</para>
-        /// </remarks>
-        protected virtual void OnEnter()
-        {
-        }
     }
 
     /// <summary>
@@ -129,14 +113,16 @@ namespace Edanoue.HybridGraph
         // 直接 Run 及び StateMachine のコンテキストでBTに遷移した際に呼ばれるエントリーポイント
         void IGraphItem.OnEnterInternal()
         {
+            // enter graph 
             _parent?.OnEnterInternal();
+            OnEnterAsLeafState();
 
             _runningCts = new CancellationTokenSource();
 
             UniTask.Void(async token =>
             {
                 var result = await WrappedExecuteAsync(token);
-                OnEndExecute(token.IsCancellationRequested ? BtNodeResult.Cancelled : result);
+                OnReturnedRootNode(token.IsCancellationRequested ? BtNodeResult.Cancelled : result);
             }, _runningCts.Token);
         }
 
@@ -152,7 +138,8 @@ namespace Edanoue.HybridGraph
             _runningCts?.Dispose();
             _runningCts = null;
 
-            OnExit(); // call inherited callback
+            // exit graph
+            OnExitAsLeafState();
             _parent?.OnExitInternal(nextNode);
         }
 
@@ -173,8 +160,25 @@ namespace Edanoue.HybridGraph
         }
 
         /// <summary>
+        /// BehaviourTree に Graph として Enter した際に呼ばれるコールバック
         /// </summary>
-        protected virtual void OnExit()
+        /// <remarks>
+        /// 以下のタイミングで呼ばれます
+        /// <para>- BehaviourTree を直接 <see cref="EdaGraph.Run" /> した際</para>
+        /// <para>- StateMachine 内部で LeafState として Enter した際</para>
+        /// </remarks>
+        protected virtual void OnEnterAsLeafState()
+        {
+        }
+
+        /// <summary>
+        /// BehaviourTree に Graph として Exit した際に呼ばれるコールバック
+        /// </summary>
+        /// <remarks>
+        /// 以下のタイミングで呼ばれます
+        /// <para>- StateMachine 内部で LeafState として Exit した際</para>
+        /// </remarks>
+        protected virtual void OnExitAsLeafState()
         {
         }
 
@@ -184,7 +188,11 @@ namespace Edanoue.HybridGraph
         {
         }
 
-        protected virtual void OnEndExecute(BtNodeResult result)
+        /// <summary>
+        /// BehaviourTree に設定されているすべてのノードの実行/評価が終わり, Root に戻ってきた時に一度呼ばれます
+        /// </summary>
+        /// <param name="result">Root ノードの結果</param>
+        protected virtual void OnReturnedRootNode(BtNodeResult result)
         {
         }
     }

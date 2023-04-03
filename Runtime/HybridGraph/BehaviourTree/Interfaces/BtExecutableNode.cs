@@ -50,7 +50,7 @@ namespace Edanoue.HybridGraph
                 foreach (var decorator in Decorators)
                 {
                     // Call decorators OnExecute
-                    decorator.OnExecute();
+                    decorator.OnPreExecute();
                 }
 
                 _stopwatchOnExecute.Restart();
