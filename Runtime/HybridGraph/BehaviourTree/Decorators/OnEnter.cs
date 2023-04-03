@@ -29,13 +29,10 @@ namespace Edanoue.HybridGraph
         /// </summary>
         /// <param name="self"></param>
         /// <param name="action"></param>
+        /// <param name="name"></param>
         /// <returns></returns>
-        public static BtDecoratorNodeOnEnter OnEnter(this IDecoratorPort self, Action action)
-        {
-            return self.OnEnter(action, _DEFAULT_NODE_NAME);
-        }
-
-        public static BtDecoratorNodeOnEnter OnEnter(this IDecoratorPort self, Action action, string name)
+        public static BtDecoratorNodeOnEnter OnEnter(this IDecoratorPort self, Action action,
+            string name = _DEFAULT_NODE_NAME)
         {
             var node = new BtDecoratorNodeOnEnter(self, name, action);
             return node;
@@ -51,13 +48,13 @@ namespace Edanoue.HybridGraph
             _action = action;
         }
 
-        internal override void OnEnter()
+        internal override void OnEnter(BtExecutableNode node)
         {
             _action.Invoke();
         }
     }
 
-    public sealed class BtDecoratorNodeOnEnter<T> : BtDecoratorNode
+    public sealed class BtDecoratorNodeOnEnter<T> : BtDecoratorNode<T>
     {
         private readonly Action<T> _action;
 
@@ -66,9 +63,9 @@ namespace Edanoue.HybridGraph
             _action = action;
         }
 
-        internal override void OnEnter()
+        internal override void OnEnter(BtExecutableNode node)
         {
-            _action.Invoke((T)Blackboard);
+            _action.Invoke(Blackboard);
         }
     }
 }

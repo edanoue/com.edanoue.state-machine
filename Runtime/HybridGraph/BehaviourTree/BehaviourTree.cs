@@ -8,27 +8,50 @@ using Cysharp.Threading.Tasks;
 
 namespace Edanoue.HybridGraph
 {
-    public abstract class BehaviourTreeBase : BtActionNode
+    public abstract class BehaviourTreeBase : BtActionNode, ICompositePort, IRootNode
     {
-        private protected readonly BtRootNode RootNode = new();
+        private protected BtExecutableNode? EntryNode;
+
+        internal BehaviourTreeBase() : base(null, "")
+        {
+            // No OP
+        }
+
+        void ICompositePort.AddNodeAndSetBlackboard(BtExecutableNode node)
+        {
+            if (EntryNode is not null)
+            {
+                throw new InvalidOperationException("Root node can only have one child");
+            }
+
+            node.SetBlackboardRaw(BlackboardRaw);
+            EntryNode = node;
+        }
+
+        ICompositePort IRootNode.Add => this;
 
         protected sealed override async UniTask<BtNodeResult> ExecuteAsync(CancellationToken token)
         {
-            return await RootNode.ExecuteAsync(token);
-        }
+            // Entry Node が設定されていない場合は Failed を返す
+            if (EntryNode is null)
+            {
+                return BtNodeResult.Failed;
+            }
 
-        internal void SetupBehaviours()
-        {
-            RootNode.SetBlackboard(Blackboard);
-            OnSetupBehaviours(RootNode);
+            return await EntryNode.WrappedExecuteAsync(token);
         }
 
         /// <summary>
         /// </summary>
         /// <param name="root"></param>
-        protected abstract void OnSetupBehaviours(IRootNode root);
+        protected internal abstract void OnSetupBehaviours(IRootNode root);
     }
 
+    /// <summary>
+    /// HybridGraph で動作する BehaviourTree の基底クラス
+    /// そのまま Run したり, StateMachine の LeafState として取り扱うことができる
+    /// </summary>
+    /// <typeparam name="TBlackboard"></typeparam>
     public abstract class BehaviourTree<TBlackboard> : BehaviourTreeBase, IGraphNode, IGraphEntryNode
     {
         /// <summary>
@@ -38,30 +61,30 @@ namespace Edanoue.HybridGraph
         // ReSharper disable once InconsistentNaming
         private readonly Dictionary<int, IGraphNode> _transitionTable = new();
 
-        private IGraphBox? _parent;
+        private   IGraphBox?               _parent;
+        private   CancellationTokenSource? _runningCts;
+        protected TBlackboard              Blackboard = default!;
 
+        // HybridGraph.Run から直接起動された時のエントリーポイント
         IGraphNode IGraphEntryNode.Run(object blackboard)
         {
-            if (RootNode.ChildCount != 0)
+            if (EntryNode is not null)
             {
                 throw new InvalidOperationException("Behaviour tree is already started.");
             }
 
-            Blackboard = blackboard;
-            SetupBehaviours();
-
-            // Setup validation check
-            if (RootNode.ChildCount != 1)
-            {
-                throw new InvalidOperationException("Root node must have one child.");
-            }
+            SetBlackboardRaw(blackboard);
+            OnSetupBehaviours(this);
 
             return this;
         }
 
         public void Dispose()
         {
-            RootNode.Dispose();
+            _runningCts?.Cancel();
+            _runningCts?.Dispose();
+
+            OnDestroy();
         }
 
         void IGraphItem.Connect(int trigger, IGraphItem nextNode)
@@ -74,37 +97,49 @@ namespace Edanoue.HybridGraph
             _transitionTable.Add(trigger, nextNode.GetEntryNode());
         }
 
+        // StateMachine の中に組み込まれる際に呼ばれるエントリーポイント
         void IGraphItem.OnInitializedInternal(object blackboard, IGraphBox parent)
         {
-            if (RootNode.ChildCount != 0)
+            if (EntryNode is not null)
             {
                 throw new InvalidOperationException("Behaviour tree is already started.");
             }
 
             _parent = parent;
-            Blackboard = blackboard;
-            SetupBehaviours();
-
-            // Setup validation check
-            if (RootNode.ChildCount != 1)
-            {
-                throw new InvalidOperationException("Root node must have one child.");
-            }
+            SetBlackboardRaw(blackboard);
+            OnSetupBehaviours(this);
         }
 
+        // 直接 Run 及び StateMachine のコンテキストでBTに遷移した際に呼ばれるエントリーポイント
         void IGraphItem.OnEnterInternal()
         {
+            // enter graph 
             _parent?.OnEnterInternal();
-            RootNode.OnEnter();
+            OnEnterAsLeafState();
+
+            _runningCts = new CancellationTokenSource();
+
+            UniTask.Void(async token =>
+            {
+                var result = await WrappedExecuteAsync(token);
+                OnReturnedRootNode(token.IsCancellationRequested ? BtNodeResult.Cancelled : result);
+            }, _runningCts.Token);
         }
 
         void IGraphItem.OnUpdateInternal()
         {
+            // No OP
         }
 
         void IGraphItem.OnExitInternal(IGraphItem nextNode)
         {
-            RootNode.OnExit();
+            // Cancel Running CTS
+            _runningCts?.Cancel();
+            _runningCts?.Dispose();
+            _runningCts = null;
+
+            // exit graph
+            OnExitAsLeafState();
             _parent?.OnExitInternal(nextNode);
         }
 
@@ -116,6 +151,49 @@ namespace Edanoue.HybridGraph
         bool IGraphNode.TryGetNextNode(int trigger, out IGraphNode nextNode)
         {
             return _transitionTable.TryGetValue(trigger, out nextNode);
+        }
+
+        internal sealed override void SetBlackboardRaw(object blackboardRaw)
+        {
+            base.SetBlackboardRaw(blackboardRaw);
+            Blackboard = (TBlackboard)blackboardRaw;
+        }
+
+        /// <summary>
+        /// BehaviourTree に Graph として Enter した際に呼ばれるコールバック
+        /// </summary>
+        /// <remarks>
+        /// 以下のタイミングで呼ばれます
+        /// <para>- BehaviourTree を直接 <see cref="EdaGraph.Run" /> した際</para>
+        /// <para>- StateMachine 内部で LeafState として Enter した際</para>
+        /// </remarks>
+        protected virtual void OnEnterAsLeafState()
+        {
+        }
+
+        /// <summary>
+        /// BehaviourTree に Graph として Exit した際に呼ばれるコールバック
+        /// </summary>
+        /// <remarks>
+        /// 以下のタイミングで呼ばれます
+        /// <para>- StateMachine 内部で LeafState として Exit した際</para>
+        /// </remarks>
+        protected virtual void OnExitAsLeafState()
+        {
+        }
+
+        /// <summary>
+        /// </summary>
+        protected virtual void OnDestroy()
+        {
+        }
+
+        /// <summary>
+        /// BehaviourTree に設定されているすべてのノードの実行/評価が終わり, Root に戻ってきた時に一度呼ばれます
+        /// </summary>
+        /// <param name="result">Root ノードの結果</param>
+        protected virtual void OnReturnedRootNode(BtNodeResult result)
+        {
         }
     }
 }
