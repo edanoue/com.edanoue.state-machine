@@ -55,6 +55,11 @@ namespace Edanoue.HybridGraph
 
             while (_currentChildIndex != BtSpecialChild.RETURN_TO_PARENT)
             {
+                if (token.IsCancellationRequested)
+                {
+                    return BtNodeResult.Cancelled;
+                }
+
                 lastResult = await Children[_currentChildIndex].WrappedExecuteAsync(token);
                 _currentChildIndex = FindChildToExecute(in lastResult);
             }
