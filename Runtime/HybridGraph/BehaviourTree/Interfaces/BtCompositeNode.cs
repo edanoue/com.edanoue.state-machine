@@ -43,30 +43,6 @@ namespace Edanoue.HybridGraph
             return BtSpecialChild.RETURN_TO_PARENT;
         }
 
-        private bool DoDecoratorsAllowExit(int childIndex)
-        {
-            var child = Children[childIndex];
-
-            // No decorators, allow enter
-            if (child.Decorators.Count == 0)
-            {
-                return true;
-            }
-
-            for (var decoratorIndex = 0; decoratorIndex < child.Decorators.Count; decoratorIndex++)
-            {
-                var decorator = child.Decorators[decoratorIndex];
-                if (decorator.CanExit())
-                {
-                    continue;
-                }
-
-                return false;
-            }
-
-            return true;
-        }
-
         protected override async UniTask<BtNodeResult> ExecuteAsync(CancellationToken token)
         {
             // --- OnNodeActivation ---
@@ -84,7 +60,6 @@ namespace Edanoue.HybridGraph
             }
 
             // --- OnNodeDeactivation ---
-            // 自身の Decorator により Exit が許可されたら親に戻る
             return lastResult;
         }
     }
