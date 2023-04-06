@@ -58,11 +58,14 @@ namespace Edanoue.HybridGraph
                     decorator.OnPreExecute();
                 }
 
-                _stopwatchOnExecute.Restart();
-                var (isCancelled, result) = await ExecuteAsync(linkedCts.Token).SuppressCancellationThrow();
-                _stopwatchOnExecute.Stop();
-
-                if (isCancelled)
+                BtNodeResult result;
+                try
+                {
+                    _stopwatchOnExecute.Restart();
+                    result = await ExecuteAsync(linkedCts.Token);
+                    _stopwatchOnExecute.Stop();
+                }
+                catch (OperationCanceledException)
                 {
                     if (_forceExitStatus != BtForceExitStatus.None)
                     {
